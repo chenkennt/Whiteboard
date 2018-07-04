@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
+    crossorigin="anonymous">
+
+  <title>Azure SignalR Sign-in Sample</title>
+  <style>
+    /*
+    .navbar {
+      padding: 0;
+    }*/
+
+    .navbar-brand {
+      padding: 0;
+      margin: 0;
+    }
+
+    .nav-logo-img {
+      width: 50px;
+    }
+
+    .disconnected {
+      -webkit-filter: grayscale(100%);
+      /* Safari 6.0 - 9.0 */
+      filter: grayscale(100%);
+    }
+
+    .container-fluid {
+      min-height: 100%;
+      height: 100%;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    #whiteboard {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      display: block;
+    }
+
+    svg {
+      display: block;
+    }
+
+    .toolbox {
+      width: 7rem;
+      height: 1.5rem;
+      display: inline-block;
+      vertical-align: middle;
+      border-radius: 0.3rem;
+      border: 1px solid black;
+    }
+
+    .selected {
+      width: 4rem;
+      border: 1px solid white;
+    }
+
+    .penbox {
+      background-color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav id="app" class="navbar navbar-expand-sm bg-dark fixed-top navbar-dark">
+      <a class="navbar-brand " href="#">
+        <img id="logo" src="images/signalr-logo.png" alt="logo" class="nav-logo-img">
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+        aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="clearScreen(); return false;">Clear</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">
+              <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
+                <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+              </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">
+              <svg class="toolbox selected penbox">
+                <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
+              </svg>
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a v-for="w in allWidth" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
+                <svg class="toolbox penbox">
+                  <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                </svg>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  <div id="main" class="container-fluid fill">
+    <div id="whiteboard"></div>
+  </div>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@aspnet/signalr@1.0.0/dist/browser/signalr.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+  <script>
+    function connect(url, connected, disconnected) {
+      var connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
+        console.log('Failed to start SignalR connection: ' + error.message);
+        setTimeout(() => connectWithRetry(c), 5000);
+      });
+
+      // create connection
+      var c = new signalR.HubConnectionBuilder().withUrl(url).build();
+
+      // auto reconnect when connection is closed
+      c.onclose(() => {
+        disconnected(c);
+        console.log('Disconnected, try to reconnect.');
+        connectWithRetry(c);
+      });
+
+      connectWithRetry(c);
+      return c;
+    }
+
+    function onConnect(c) {
+      $('#logo').removeClass('disconnected');
+      clearScreen(true);
+    }
+
+    function onDisconnect(c) {
+      $('#logo').addClass('disconnected');
+    }
+
+    function generateId() {
+      return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
+    }
+
+    function clearScreen(skipBroadcast) {
+      lines = {};
+      whiteboard.clear();
+      if (!skipBroadcast) connection.send('clear');
+    }
+
+    function initUI() {
+      var id, data, element;
+      var line = () => ({ data: data, color: options.color, width: options.width });
+
+      $('#whiteboard').on('mousedown', e => {
+        var tool = tools[options.tool];
+        id = generateId();
+        data = tool.start(e.offsetX, e.offsetY);
+        element = tool.draw(whiteboard, options.color, options.width, data);
+        tool.broadcast(connection, id, options.color, options.width, data);
+      }).on('mouseup', e => {
+        if (id) {
+          var tool = tools[options.tool];
+          tool.move(e.offsetX, e.offsetY, data);
+          tool.update(element, data);
+          tool.broadcast(connection, id, options.color, options.width, data);
+          id = data = null;
+        }
+      }).on('mousemove', e => {
+        if (id) {
+          var tool = tools[options.tool];
+          tool.move(e.offsetX, e.offsetY, data);
+          tool.update(element, data);
+          tool.broadcast(connection, id, options.color, options.width, data);
+        }
+      });
+    }
+
+    var shapes;
+    var whiteboard = SVG('whiteboard');
+    var connection = connect('/draw', onConnect, onDisconnect);
+
+    var tools = {
+      pencil: {
+        start: (x, y) => [x, y],
+        move: (x, y, d) => d.push(x, y),
+        draw: (b, c, w, d) => b.polyline(d).fill('none').stroke({ color: c, width: w, linecap: 'round' }),
+        update: (e, d) => e.plot(d),
+        broadcast: (conn, i, c, w, d) => conn.send('updateLine', i, { color: c, width: w, data: d }),
+        event: 'lineUpdated'
+      },
+      circle: {
+        event: 'circleUpdated',
+        draw: () => {}
+      }
+    };
+
+    // setup callbacks
+    connection.on('clear', () => clearScreen(true));
+    for (var t in tools) {
+      (function(n, c) {
+        connection.on(n, (i, l) => c(whiteboard, l.color, l.width, l.data));
+      })(tools[t].event, tools[t].draw);
+    }
+
+    // init UI
+    var options = {
+      tool: 'pencil',
+      color: 'black',
+      width: 1,
+      colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'],
+      allWidth: [1, 2, 4, 8]
+    };
+    var app = new Vue({
+      el: '#app',
+      data: options
+    });
+    initUI();
+  </script>
+</body>
+
+</html>
