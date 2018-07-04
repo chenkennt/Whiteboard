@@ -187,22 +187,27 @@
 
     function initUI() {
       var id, data;
-      var broadcast = () => connection.send('updateShape', id, { kind: options.tool, color: options.color, width: options.width, data: data });
-
+      var timestamp = 0;
+      var broadcast = (force) => {
+        var newTimestamp = new Date().getTime();
+        if (!force && newTimestamp - timestamp < 200) return;
+        connection.send('updateShape', id, { kind: options.tool, color: options.color, width: options.width, data: data });
+        timestamp = newTimestamp;
+      };
       $('#whiteboard').on('mousedown', e => {
         if (!shapes) return;
         var tool = tools[options.tool];
         id = generateId();
         data = tool.start(e.offsetX, e.offsetY);
         shapes[id] = tool.draw(whiteboard, options.color, options.width, data);
-        broadcast();
+        broadcast(true);
       }).on('mouseup', e => {
         if (!shapes) return;
         if (id) {
           var tool = tools[options.tool];
           tool.move(e.offsetX, e.offsetY, data);
           tool.update(shapes[id], data);
-          broadcast();
+          broadcast(true);
           id = data = null;
         }
       }).on('mousemove', e => {
