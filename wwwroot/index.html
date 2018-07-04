@@ -171,6 +171,7 @@
     }
 
     function onDisconnect(c) {
+      shapes = null;
       $('#logo').addClass('disconnected');
     }
 
@@ -179,7 +180,7 @@
     }
 
     function clearScreen(skipBroadcast) {
-      lines = {};
+      shapes = {};
       whiteboard.clear();
       if (!skipBroadcast) connection.send('clear');
     }
@@ -189,12 +190,14 @@
       var broadcast = () => connection.send('updateShape', id, { kind: options.tool, color: options.color, width: options.width, data: data });
 
       $('#whiteboard').on('mousedown', e => {
+        if (!shapes) return;
         var tool = tools[options.tool];
         id = generateId();
         data = tool.start(e.offsetX, e.offsetY);
         shapes[id] = tool.draw(whiteboard, options.color, options.width, data);
         broadcast();
       }).on('mouseup', e => {
+        if (!shapes) return;
         if (id) {
           var tool = tools[options.tool];
           tool.move(e.offsetX, e.offsetY, data);
@@ -203,6 +206,7 @@
           id = data = null;
         }
       }).on('mousemove', e => {
+        if (!shapes) return;
         if (id) {
           var tool = tools[options.tool];
           tool.move(e.offsetX, e.offsetY, data);
@@ -212,7 +216,7 @@
       });
     }
 
-    var shapes = {};
+    var shapes;
     var whiteboard = SVG('whiteboard');
     var connection = connect('/draw', onConnect, onDisconnect);
 
