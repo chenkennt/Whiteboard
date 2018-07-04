@@ -13,31 +13,34 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
 {
     public class DrawHub : Hub
     {
-        public class Line
+        public class Shape
         {
-            public List<int> Data { get; set; }
+            public string Kind { get; set; }
 
             public string Color { get; set; }
 
             public int Width { get; set; }
+
+            public List<int> Data { get; set; }
+
         }
 
-        static ConcurrentDictionary<string, Line> lines = new ConcurrentDictionary<string, Line>();
+        static ConcurrentDictionary<string, Shape> shapes = new ConcurrentDictionary<string, Shape>();
 
         public override Task OnConnectedAsync()
         {
-            return Task.WhenAll(lines.AsEnumerable().Select(l => Clients.Client(Context.ConnectionId).SendAsync("LineUpdated", l.Key, l.Value)));
+            return Task.WhenAll(shapes.AsEnumerable().Select(l => Clients.Client(Context.ConnectionId).SendAsync("ShapeUpdated", l.Key, l.Value)));
         }
 
-        public async Task UpdateLine(string id, Line line)
+        public async Task UpdateShape(string id, Shape line)
         {
-            lines[id] = line;
-            await Clients.Others.SendAsync("LineUpdated", id, line);
+            shapes[id] = line;
+            await Clients.Others.SendAsync("ShapeUpdated", id, line);
         }
 
         public async Task Clear()
         {
-            lines.Clear();
+            shapes.Clear();
             await Clients.Others.SendAsync("Clear");
         }
     }

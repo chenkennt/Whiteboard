@@ -7,11 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Azure.SignalR.Samples.Whiteboard
 {
-    public class TestClass
-    {
-        public string Message;
-    }
-
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -24,15 +19,14 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSignalR();
-            services.AddSingleton<TestClass>();
+            services.AddSignalR().AddAzureSignalR();
         }
 
         public void Configure(IApplicationBuilder app)
         {
             app.UseMvc();
             app.UseFileServer();
-            app.UseSignalR(routes =>
+            app.UseAzureSignalR(routes =>
             {
                 routes.MapHub<DrawHub>("/draw");
             });

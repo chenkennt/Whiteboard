@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
     crossorigin="anonymous">
 
-  <title>Azure SignalR Sign-in Sample</title>
+  <title>Whiteboard</title>
   <style>
     /*
     .navbar {
@@ -27,8 +27,7 @@
     }
 
     .disconnected {
-      -webkit-filter: grayscale(100%);
-      /* Safari 6.0 - 9.0 */
+      -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
       filter: grayscale(100%);
     }
 
@@ -92,6 +91,17 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
               aria-expanded="false">
+              {{ tool }}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
+                {{ t }}
+              </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">
               <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -108,7 +118,7 @@
               </svg>
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a v-for="w in allWidth" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
+              <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
                 <svg class="toolbox penbox">
                   <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
                 </svg>
@@ -175,67 +185,87 @@
     }
 
     function initUI() {
-      var id, data, element;
-      var line = () => ({ data: data, color: options.color, width: options.width });
+      var id, data;
+      var broadcast = () => connection.send('updateShape', id, { kind: options.tool, color: options.color, width: options.width, data: data });
 
       $('#whiteboard').on('mousedown', e => {
         var tool = tools[options.tool];
         id = generateId();
         data = tool.start(e.offsetX, e.offsetY);
-        element = tool.draw(whiteboard, options.color, options.width, data);
-        tool.broadcast(connection, id, options.color, options.width, data);
+        shapes[id] = tool.draw(whiteboard, options.color, options.width, data);
+        broadcast();
       }).on('mouseup', e => {
         if (id) {
           var tool = tools[options.tool];
           tool.move(e.offsetX, e.offsetY, data);
-          tool.update(element, data);
-          tool.broadcast(connection, id, options.color, options.width, data);
+          tool.update(shapes[id], data);
+          broadcast();
           id = data = null;
         }
       }).on('mousemove', e => {
         if (id) {
           var tool = tools[options.tool];
           tool.move(e.offsetX, e.offsetY, data);
-          tool.update(element, data);
-          tool.broadcast(connection, id, options.color, options.width, data);
+          tool.update(shapes[id], data);
+          broadcast();
         }
       });
     }
 
-    var shapes;
+    var shapes = {};
     var whiteboard = SVG('whiteboard');
     var connection = connect('/draw', onConnect, onDisconnect);
 
+    var draw = (f, c, w) => f.fill('none').stroke({ color: c, width: w, linecap: 'round' });
+
     var tools = {
-      pencil: {
+      polyline: {
         start: (x, y) => [x, y],
         move: (x, y, d) => d.push(x, y),
-        draw: (b, c, w, d) => b.polyline(d).fill('none').stroke({ color: c, width: w, linecap: 'round' }),
-        update: (e, d) => e.plot(d),
-        broadcast: (conn, i, c, w, d) => conn.send('updateLine', i, { color: c, width: w, data: d }),
-        event: 'lineUpdated'
+        draw: (b, c, w, d) => draw(b.polyline(d), c, w),
+        update: (e, d) => e.plot(d)
+      },
+      line: {
+        start: (x, y) => [x, y, x, y],
+        move: (x, y, d) => { d[2] = x; d[3] = y; },
+        draw: (b, c, w, d) => draw(b.line(d), c, w),
+        update: (e, d) => e.plot(d)
+      },
+      rect: {
+        start: (x, y) => [x, y, x, y],
+        move: (x, y, d) => { d[2] = x; d[3] = y; },
+        draw: (b, c, w, d) => draw(b.rect(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).move(Math.min(d[0], d[2]), Math.min(d[1], d[3])), c, w),
+        update: (e, d) => e.x(Math.min(d[2], d[0])).y(Math.min(d[1], d[3])).size(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1]))
       },
       circle: {
-        event: 'circleUpdated',
-        draw: () => {}
+        start: (x, y) => [x, y, 0],
+        move: (x, y, d) => d[2] = Math.sqrt((d[0] - x) * (d[0] - x) + (d[1] - y) * (d[1] - y)),
+        draw: (b, c, w, d) => draw(b.circle(d[2] * 2).cx(d[0]).cy(d[1]), c, w),
+        update: (e, d) => e.radius(d[2])
+      },
+      ellipse: {
+        start: (x, y) => [x, y, x, y],
+        move: (x, y, d) => { d[2] = x; d[3] = y; },
+        draw: (b, c, w, d) => draw(b.ellipse(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2), c, w),
+        update: (e, d) => e.cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2).radius(Math.abs(d[2] - d[0]) / 2, Math.abs(d[3] - d[1]) / 2)
       }
     };
 
     // setup callbacks
     connection.on('clear', () => clearScreen(true));
-    for (var t in tools) {
-      (function(n, c) {
-        connection.on(n, (i, l) => c(whiteboard, l.color, l.width, l.data));
-      })(tools[t].event, tools[t].draw);
-    }
+    connection.on('shapeUpdated', (i, s) => {
+      if (shapes[i]) tools[s.kind].update(shapes[i], s.data);
+      else shapes[i] = tools[s.kind].draw(whiteboard, s.color, s.width, s.data);
+    });
 
     // init UI
     var options = {
-      tool: 'pencil',
+      tool: 'polyline',
       color: 'black',
       width: 1,
+      tools: Object.keys(tools),
       colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'],
-      allWidth: [1, 2, 4, 8]
+      widths: [1, 2, 4, 8]
     };
     var app = new Vue({
       el: '#app',
