@@ -44,6 +44,12 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
             await Clients.Others.SendAsync("ShapeUpdated", id, shape);
         }
 
+        public async Task RemoveShape(string id)
+        {
+            shapes.Remove(id, out _);
+            await Clients.Others.SendAsync("ShapeRemoved", id);
+        }
+
         public async Task Clear()
         {
             shapes.Clear();

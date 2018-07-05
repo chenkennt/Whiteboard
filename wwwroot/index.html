@@ -27,7 +27,8 @@
     }
 
     .disconnected {
-      -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+      -webkit-filter: grayscale(100%);
+      /* Safari 6.0 - 9.0 */
       filter: grayscale(100%);
     }
 
@@ -77,7 +78,7 @@
   <header>
     <nav id="app" class="navbar navbar-expand-sm bg-dark fixed-top navbar-dark">
       <a class="navbar-brand " href="#">
-        <img id="logo" src="images/signalr-logo.png" alt="logo" class="nav-logo-img">
+        <img id="logo" src="images/signalr-logo.png" alt="logo" class="nav-logo-img disconnected">
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
         aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +87,13 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="#" onclick="clearScreen(); return false;">Clear</a>
+            <a class="nav-link" href="#" onclick="clearScreen(); return false;">New</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="diagram.undo(); return false;">Undo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="diagram.redo(); return false;">Redo</a>
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
@@ -175,86 +182,112 @@
       $('#logo').addClass('disconnected');
     }
 
-    function generateId() {
-      return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
-    }
-
-    function clearScreen(skipBroadcast) {
-      shapes = {};
-      whiteboard.clear();
-      if (!skipBroadcast) connection.send('clear');
-    }
-
-    function initUI() {
+    var Diagram = function (element, tools) {
       var id;
+      var shapes = {};
+      var past = [], future = [];
       var timestamp = 0;
       var cache = [];
-      var broadcast = (delta, force) => {
-        var newTimestamp = new Date().getTime();
-        if (delta) cache = cache.concat(delta);
-        if (!force && newTimestamp - timestamp < 250) return;
-        if (delta) connection.send('patchShape', id, cache);
-        else connection.send('updateShape', id, { kind: options.tool, color: options.color, width: options.width, data: shapes[id].data });
-        cache = [];
-        timestamp = newTimestamp;
-      };
-      var touchStart = e => {
-        start(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
-        for (var i = 1; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
-        }
-        e.preventDefault();
-      };
-      var touchMove = e => {
-        for (var i = 0; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
-        }
-        e.preventDefault();
-      };
-      var touchEnd = e => {
-        for (var i = 0; i < e.changedTouches.length - 1; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
-        }
-        end(e.changedTouches[e.changedTouches.length - 1].pageX, e.changedTouches[e.changedTouches.length - 1].pageY);
-        e.preventDefault();
-      };
-      var start = (x, y) => {
-        if (!shapes) return;
-        var tool = tools[options.tool];
-        id = generateId();
-        var data = tool.start(x, y);
-        shapes[id] = { el: tool.draw(whiteboard, options.color, options.width, data), kind: options.tool, data: data };
-        broadcast(false, true);
-      };
-      var move = (x, y) => {
-        if (!shapes) return;
-        if (id) {
-          var tool = tools[options.tool];
-          broadcast(tool.move(x, y, shapes[id].data));
-          tool.update(shapes[id].el, shapes[id].data);
-        }
-      };
-      var end = (x, y) => {
-        if (!shapes) return;
-        if (id) {
-          var tool = tools[options.tool];
-          broadcast(tool.move(x, y, shapes[id].data), true);
-          tool.update(shapes[id].el, shapes[id].data);
-          id = null;
-        }
-      };
-      $('#whiteboard')
-        .on('mousedown', e => start(e.offsetX, e.offsetY))
-        .on('mouseup', e => end(e.offsetX, e.offsetY))
-        .on('mousemove', e => move(e.offsetX, e.offsetY))
-        .on('touchstart', touchStart)
-        .on('touchend', touchEnd)
-        .on('touchmove', touchMove);
-    }
 
-    var shapes;
-    var whiteboard = SVG('whiteboard');
-    var connection = connect('/draw', onConnect, onDisconnect);
+      var onShapeUpdateCallback, onShapePatchCallback, onShapeRemoveCallback;
+
+      function generateId() {
+        return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
+      }
+
+      function tryNotify(c) {
+        var t = new Date().getTime();
+        if (t - timestamp < 250) return;
+        c();
+        timestamp = t;
+      }
+
+      function startShape(k, c, w, x, y) {
+        if (id) return;
+        id = generateId();
+        var m = { kind: k, color: c, width: w, data: tools[k].start(x, y) };
+        shapes[id] = { view: tools[k].draw(element, c, w, m.data), model: m };
+        future = [];
+        past.push(id);
+        onShapeUpdateCallback(id, m);
+      }
+
+      function drawShape(x, y) {
+        if (!id) return;
+        var s = shapes[id];
+        var t = tools[s.model.kind];
+        var d = t.move(x, y, s.model.data);
+        t.update(s.view, s.model.data);
+        if (d) {
+          cache = cache.concat(d);
+          tryNotify(() => {
+            onShapePatchCallback(id, cache)
+            cache = [];
+          });
+        } else tryNotify(() => onShapeUpdateCallback(id, s.model));
+      }
+
+      function endShape() {
+        id = null;
+      }
+
+      function updateShape(i, m) {
+        if (shapes[i]) tools[m.kind].update(shapes[i].view, shapes[i].model.data = m.data);
+        else shapes[i] = { view: tools[m.kind].draw(element, m.color, m.width, m.data), model: m };
+      }
+
+      function patchShape(i, d) {
+        if (shapes[i]) tools[shapes[i].model.kind].update(shapes[i].view, shapes[i].model.data = shapes[i].model.data.concat(d));
+      }
+
+      function removeShape(i) {
+        if (!shapes[i]) return;
+        shapes[i].view.remove();
+        delete shapes[i];
+      }
+
+      function clear() {
+        id = null;
+        shapes = {};
+        past = [], future = [];
+        timestamp = 0;
+        cache = [];
+        element.clear();
+      }
+
+      function undo() {
+        var i = past.pop();
+        if (!i) return;
+        future.push(shapes[i].model);
+        onShapeRemoveCallback(i);
+      }
+
+      function redo() {
+        var m = future.pop();
+        if (!m) return;
+        var i = generateId();
+        shapes[i] = {
+          view: tools[m.kind].draw(element, m.color, m.width, m.data),
+          model: m
+        };
+        onShapeUpdateCallback(i, m);
+        past.push(i);
+      }
+
+      return {
+        startShape: startShape,
+        drawShape: drawShape,
+        endShape: endShape,
+        updateShape: updateShape,
+        patchShape: patchShape,
+        removeShape: removeShape,
+        undo: undo,
+        redo: redo,
+        onShapeUpdate: c => onShapeUpdateCallback = c,
+        onShapeRemove: c => onShapeRemoveCallback = c,
+        onShapePatch: c => onShapePatchCallback = c
+      };
+    };
 
     var draw = (f, c, w) => f.fill('none').stroke({ color: c, width: w, linecap: 'round' });
 
@@ -291,15 +324,59 @@
       }
     };
 
+    var connection = connect('/draw', onConnect, onDisconnect);
+    var whiteboard = SVG('whiteboard');
+    var diagram = new Diagram(whiteboard, tools);
+
+    function initUI() {
+      var touchStart = e => {
+        start(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
+        for (var i = 1; i < e.changedTouches.length; i++) {
+          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
+        }
+        e.preventDefault();
+      };
+      var touchMove = e => {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
+        }
+        e.preventDefault();
+      };
+      var touchEnd = e => {
+        for (var i = 0; i < e.changedTouches.length - 1; i++) {
+          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
+        }
+        end(e.changedTouches[e.changedTouches.length - 1].pageX, e.changedTouches[e.changedTouches.length - 1].pageY);
+        e.preventDefault();
+      };
+      var start = (x, y) => {
+        var tool = tools[options.tool];
+        diagram.startShape(options.tool, options.color, options.width, x, y);
+      };
+      var move = diagram.drawShape;
+      var end = diagram.endShape;
+      $('#whiteboard')
+        .on('mousedown', e => start(e.offsetX, e.offsetY))
+        .on('mouseup', e => end(e.offsetX, e.offsetY))
+        .on('mousemove', e => move(e.offsetX, e.offsetY))
+        .on('touchstart', touchStart)
+        .on('touchend', touchEnd)
+        .on('touchmove', touchMove);
+    }
+
+    function clearScreen() {
+      diagram.clear();
+      connection.send('clear');
+    }
+
     // setup callbacks
-    connection.on('clear', () => clearScreen(true));
-    connection.on('shapeUpdated', (i, s) => {
-      if (shapes[i]) tools[s.kind].update(shapes[i].el, shapes[i].data = s.data);
-      else shapes[i] = { el: tools[s.kind].draw(whiteboard, s.color, s.width, s.data), kind: s.kind, data: s.data };
-    });
-    connection.on('shapePatched', (i, d) => {
-      tools[shapes[i].kind].update(shapes[i].el, shapes[i].data = shapes[i].data.concat(d));
-    });
+    diagram.onShapeUpdate((i, m) => connection.send('updateShape', i, m));
+    diagram.onShapeRemove(i => connection.send('removeShape', i));
+    diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
+    connection.on('clear', diagram.clear);
+    connection.on('shapeUpdated', diagram.updateShape);
+    connection.on('shapePatched', diagram.patchShape);
+    connection.on('shapeRemoved', diagram.removeShape);
 
     // init UI
     var options = {
