@@ -78,7 +78,7 @@
   <header>
     <nav id="app" class="navbar navbar-expand-sm bg-dark fixed-top navbar-dark">
       <a class="navbar-brand " href="#">
-        <img id="logo" src="images/signalr-logo.png" alt="logo" class="nav-logo-img disconnected">
+        <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
         aria-expanded="false" aria-label="Toggle navigation">
@@ -87,13 +87,13 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="#" onclick="clearScreen(); return false;">New</a>
+            <a class="nav-link" href="#" onclick="diagram.clear(); return false;">Clear</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" onclick="diagram.undo(); return false;">Undo</a>
+            <a v-bind:class="{ 'nav-link': true, disabled: !hasUndo }" href="#" onclick="diagram.undo(); return false;">Undo</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" onclick="diagram.redo(); return false;">Redo</a>
+            <a v-bind:class="{ 'nav-link': true, disabled: !hasRedo }" href="#" onclick="diagram.redo(); return false;">Redo</a>
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
@@ -172,24 +172,14 @@
       return c;
     }
 
-    function onConnect(c) {
-      $('#logo').removeClass('disconnected');
-      clearScreen(true);
-    }
-
-    function onDisconnect(c) {
-      shapes = null;
-      $('#logo').addClass('disconnected');
-    }
-
     var Diagram = function (element, tools) {
       var id;
       var shapes = {};
       var past = [], future = [];
       var timestamp = 0;
-      var cache = [];
+      var buffer = [];
 
-      var onShapeUpdateCallback, onShapePatchCallback, onShapeRemoveCallback;
+      var shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => {};
 
       function generateId() {
         return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
@@ -202,6 +192,10 @@
         timestamp = t;
       }
 
+      function historyChange() {
+        historyChangeCallback(past.length > 0, future.length > 0);
+      }
+
       function startShape(k, c, w, x, y) {
         if (id) return;
         id = generateId();
@@ -209,7 +203,8 @@
         shapes[id] = { view: tools[k].draw(element, c, w, m.data), model: m };
         future = [];
         past.push(id);
-        onShapeUpdateCallback(id, m);
+        historyChange();
+        shapeUpdateCallback(id, m);
       }
 
       function drawShape(x, y) {
@@ -219,15 +214,19 @@
         var d = t.move(x, y, s.model.data);
         t.update(s.view, s.model.data);
         if (d) {
-          cache = cache.concat(d);
+          buffer = buffer.concat(d);
           tryNotify(() => {
-            onShapePatchCallback(id, cache)
-            cache = [];
+            shapePatchCallback(id, buffer);
+            buffer = [];
           });
-        } else tryNotify(() => onShapeUpdateCallback(id, s.model));
+        } else tryNotify(() => shapeUpdateCallback(id, s.model));
       }
 
       function endShape() {
+        if (buffer.length > 0) {
+          shapePatchCallback(id, buffer);
+          buffer = [];
+        } else shapeUpdateCallback(id, shapes[id].model);
         id = null;
       }
 
@@ -247,31 +246,37 @@
       }
 
       function clear() {
+        removeAll();
+        clearCallback();
+      }
+
+      function removeAll() {
         id = null;
         shapes = {};
         past = [], future = [];
         timestamp = 0;
-        cache = [];
+        buffer = [];
         element.clear();
+        historyChange();
       }
 
       function undo() {
         var i = past.pop();
         if (!i) return;
         future.push(shapes[i].model);
-        onShapeRemoveCallback(i);
+        removeShape(i);
+        shapeRemoveCallback(i);
+        historyChange();
       }
 
       function redo() {
         var m = future.pop();
         if (!m) return;
         var i = generateId();
-        shapes[i] = {
-          view: tools[m.kind].draw(element, m.color, m.width, m.data),
-          model: m
-        };
-        onShapeUpdateCallback(i, m);
+        updateShape(i, m);
+        shapeUpdateCallback(i, m);
         past.push(i);
+        historyChange();
       }
 
       return {
@@ -281,11 +286,15 @@
         updateShape: updateShape,
         patchShape: patchShape,
         removeShape: removeShape,
+        clear: clear,
+        removeAll: removeAll,
         undo: undo,
         redo: redo,
-        onShapeUpdate: c => onShapeUpdateCallback = c,
-        onShapeRemove: c => onShapeRemoveCallback = c,
-        onShapePatch: c => onShapePatchCallback = c
+        onShapeUpdate: c => shapeUpdateCallback = c,
+        onShapeRemove: c => shapeRemoveCallback = c,
+        onShapePatch: c => shapePatchCallback = c,
+        onClear: c => clearCallback = c,
+        onHistoryChange: c => historyChangeCallback = c
       };
     };
 
@@ -324,11 +333,40 @@
       }
     };
 
-    var connection = connect('/draw', onConnect, onDisconnect);
-    var whiteboard = SVG('whiteboard');
-    var diagram = new Diagram(whiteboard, tools);
+    var connection = connect('/draw', () => {
+      options.connected = true;
+      diagram.removeAll();
+    }, () => options.connected = false);
 
-    function initUI() {
+    var diagram = new Diagram(SVG('whiteboard'), tools);
+    diagram.onShapeUpdate((i, m) => connection.send('updateShape', i, m));
+    diagram.onShapeRemove(i => connection.send('removeShape', i));
+    diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
+    diagram.onClear(() => connection.send('clear'));
+    diagram.onHistoryChange((p, f) => [ options.hasUndo, options.hasRedo] = [p, f]);
+    connection.on('clear', diagram.removeAll);
+    connection.on('shapeUpdated', diagram.updateShape);
+    connection.on('shapePatched', diagram.patchShape);
+    connection.on('shapeRemoved', diagram.removeShape);
+
+    var options = {
+      connected: false,
+      hasUndo: false,
+      hasRedo: false,
+      tool: 'polyline',
+      color: 'black',
+      width: 1,
+      tools: Object.keys(tools),
+      colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'],
+      widths: [1, 2, 4, 8]
+    };
+
+    var app = new Vue({
+      el: '#app',
+      data: options
+    });
+
+    (function () {
       var touchStart = e => {
         start(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
         for (var i = 1; i < e.changedTouches.length; i++) {
@@ -343,18 +381,19 @@
         e.preventDefault();
       };
       var touchEnd = e => {
-        for (var i = 0; i < e.changedTouches.length - 1; i++) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
           move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
         }
-        end(e.changedTouches[e.changedTouches.length - 1].pageX, e.changedTouches[e.changedTouches.length - 1].pageY);
+        end();
         e.preventDefault();
       };
       var start = (x, y) => {
+        if (!options.connected) return;
         var tool = tools[options.tool];
         diagram.startShape(options.tool, options.color, options.width, x, y);
       };
-      var move = diagram.drawShape;
-      var end = diagram.endShape;
+      var move = (x, y) => { if (options.connected) diagram.drawShape(x, y); }
+      var end = () => { if (options.connected) diagram.endShape(); }
       $('#whiteboard')
         .on('mousedown', e => start(e.offsetX, e.offsetY))
         .on('mouseup', e => end(e.offsetX, e.offsetY))
@@ -362,36 +401,7 @@
         .on('touchstart', touchStart)
         .on('touchend', touchEnd)
         .on('touchmove', touchMove);
-    }
-
-    function clearScreen() {
-      diagram.clear();
-      connection.send('clear');
-    }
-
-    // setup callbacks
-    diagram.onShapeUpdate((i, m) => connection.send('updateShape', i, m));
-    diagram.onShapeRemove(i => connection.send('removeShape', i));
-    diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
-    connection.on('clear', diagram.clear);
-    connection.on('shapeUpdated', diagram.updateShape);
-    connection.on('shapePatched', diagram.patchShape);
-    connection.on('shapeRemoved', diagram.removeShape);
-
-    // init UI
-    var options = {
-      tool: 'polyline',
-      color: 'black',
-      width: 1,
-      tools: Object.keys(tools),
-      colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'],
-      widths: [1, 2, 4, 8]
-    };
-    var app = new Vue({
-      el: '#app',
-      data: options
-    });
-    initUI();
+    })();
   </script>
 </body>
 
