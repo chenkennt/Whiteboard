@@ -32,10 +32,16 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
             return Task.WhenAll(shapes.AsEnumerable().Select(l => Clients.Client(Context.ConnectionId).SendAsync("ShapeUpdated", l.Key, l.Value)));
         }
 
-        public async Task UpdateShape(string id, Shape line)
+        public async Task PatchShape(string id, List<int> data)
         {
-            shapes[id] = line;
-            await Clients.Others.SendAsync("ShapeUpdated", id, line);
+            shapes[id].Data.AddRange(data);
+            await Clients.Others.SendAsync("ShapePatched", id, data);
+        }
+
+        public async Task UpdateShape(string id, Shape shape)
+        {
+            shapes[id] = shape;
+            await Clients.Others.SendAsync("ShapeUpdated", id, shape);
         }
 
         public async Task Clear()
