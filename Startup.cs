@@ -18,6 +18,7 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<Diagram>();
             services.AddMvc();
             services.AddSignalR().AddAzureSignalR();
         }

@@ -75,71 +75,91 @@
 </head>
 
 <body>
-  <header>
-    <nav id="app" class="navbar navbar-expand-sm bg-dark fixed-top navbar-dark">
-      <a class="navbar-brand " href="#">
-        <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
-      </a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-        aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="#" onclick="diagram.clear(); return false;">Clear</a>
-          </li>
-          <li class="nav-item">
-            <a v-bind:class="{ 'nav-link': true, disabled: !hasUndo }" href="#" onclick="diagram.undo(); return false;">Undo</a>
-          </li>
-          <li class="nav-item">
-            <a v-bind:class="{ 'nav-link': true, disabled: !hasRedo }" href="#" onclick="diagram.redo(); return false;">Redo</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="false">
-              {{ tool }}
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
-                {{ t }}
+  <div id="app" class="container-fluid fill">
+    <header>
+      <nav class="navbar navbar-expand-sm bg-dark fixed-top navbar-dark">
+        <a class="navbar-brand " href="#">
+          <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+          aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="diagram.clear(); return false;">Clear</a>
+            </li>
+            <li class="nav-item">
+              <a v-bind:class="{ 'nav-link': true, disabled: !hasUndo }" href="#" onclick="diagram.undo(); return false;">Undo</a>
+            </li>
+            <li class="nav-item">
+              <a v-bind:class="{ 'nav-link': true, disabled: !hasRedo }" href="#" onclick="diagram.redo(); return false;">Redo</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="$('#fileSelector').click(); return false;">Upload</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                {{ tool }}
               </a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="false">
-              <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
-                <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
+                  {{ t }}
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
               </a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="false">
-              <svg class="toolbox selected penbox">
-                <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
-              </svg>
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
-                <svg class="toolbox penbox">
-                  <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
+                  <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                <svg class="toolbox selected penbox">
+                  <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
                 </svg>
               </a>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-  </header>
-  <div id="main" class="container-fluid fill">
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
+                  <svg class="toolbox penbox">
+                    <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                  </svg>
+                </a>
+              </div>
+            </li>
+          </ul>
+          <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <input id="fileSelector" onchange="upload()" type="file" name="file" hidden>
+          </form>
+        </div>
+      </nav>
+    </header>
+    <!--
+    <div>
+      <p v-for="m in messages">{{ m }}</p>
+    </div>-->
     <div id="whiteboard"></div>
+    <!--
+    <footer>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-bottom">
+        <div class="input-group">
+          <input class="form-control" type="text" placeholder="Type something to chat..." v-model="draft" v-on:keypress="messageChanged">
+          <div class="input-group-append">
+            <button class="btn btn-outline-success" v-bind:disabled="!draft" v-on:click="addMessage">Send</button>
+          </div>
+        </div>
+      </nav>
+    </footer>-->
   </div>
-
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -149,8 +169,8 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
     crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@aspnet/signalr@1.0.0/dist/browser/signalr.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@aspnet/signalr@1.0.0/dist/browser/signalr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
   <script>
     function connect(url, connected, disconnected) {
       var connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
@@ -178,8 +198,9 @@
       var past = [], future = [];
       var timestamp = 0;
       var buffer = [];
+      var background;
 
-      var shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => {};
+      var shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => { };
 
       function generateId() {
         return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
@@ -256,8 +277,14 @@
         past = [], future = [];
         timestamp = 0;
         buffer = [];
+        background = null;
         element.clear();
         historyChange();
+      }
+
+      function updateBackground(file) {
+        if (background) background.remove();
+        background = element.image(file).move(0, 66).back();
       }
 
       function undo() {
@@ -288,6 +315,7 @@
         removeShape: removeShape,
         clear: clear,
         removeAll: removeAll,
+        updateBackground: updateBackground,
         undo: undo,
         redo: redo,
         onShapeUpdate: c => shapeUpdateCallback = c,
@@ -343,11 +371,12 @@
     diagram.onShapeRemove(i => connection.send('removeShape', i));
     diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
     diagram.onClear(() => connection.send('clear'));
-    diagram.onHistoryChange((p, f) => [ options.hasUndo, options.hasRedo] = [p, f]);
+    diagram.onHistoryChange((p, f) => [options.hasUndo, options.hasRedo] = [p, f]);
     connection.on('clear', diagram.removeAll);
     connection.on('shapeUpdated', diagram.updateShape);
     connection.on('shapePatched', diagram.patchShape);
     connection.on('shapeRemoved', diagram.removeShape);
+    connection.on('backgroundUpdated', i => diagram.updateBackground('/background/' + i));
 
     var options = {
       connected: false,
@@ -358,12 +387,36 @@
       width: 1,
       tools: Object.keys(tools),
       colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple'],
-      widths: [1, 2, 4, 8]
+      widths: [1, 2, 4, 8],
+      messages: [],
+      draft: ''
     };
+
+    function upload() {
+      var formData = new FormData($('#uploadForm')[0]);
+      $.ajax({
+        type: 'POST',
+        url: '/background/upload',
+        processData: false,
+        contentType: false,
+        cache: false,
+        data: formData
+      });
+    }
 
     var app = new Vue({
       el: '#app',
-      data: options
+      data: options,
+      methods: {
+        addMessage: function() {
+          if (!this.draft) return;
+          this.messages.push(this.draft);
+          this.draft = '';
+        },
+        messageChanged: function(e) {
+          if (e.code === 'Enter') this.addMessage();
+        }
+      }
     });
 
     (function () {
