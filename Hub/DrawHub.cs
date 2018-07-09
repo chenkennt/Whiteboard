@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace Microsoft.Azure.SignalR.Samples.Whiteboard
 {
@@ -20,7 +21,12 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
         {
             var t = Task.WhenAll(diagram.Shapes.AsEnumerable().Select(l => Clients.Client(Context.ConnectionId).SendAsync("ShapeUpdated", l.Key, l.Value)));
             if (diagram.Background != null) t = t.ContinueWith(_ => Clients.Client(Context.ConnectionId).SendAsync("BackgroundUpdated", diagram.BackgroundId));
-            return t;
+            return t.ContinueWith(_ => Clients.All.SendAsync("UserUpdated", diagram.UserEnter()));
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            return Clients.All.SendAsync("UserUpdated", diagram.UserLeave());
         }
 
         public async Task PatchShape(string id, List<int> data)
