@@ -88,97 +88,83 @@
 </head>
 
 <body>
-  <header id="toolbar">
-    <nav class="navbar navbar-expand-sm navbar-light bg-light fixed-top">
-      <span class="navbar-brand ">
-        <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
-      </span>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-            <a class="btn btn-primary" data-placement="top" data-popover-content="#a1" data-toggle="popover" data-trigger="focus" href="#"
-              tabindex="0">Popover Example</a>
-            <div class="hidden" id="a1">
-              <div class="popover-heading">
-                Choose pen color
-              </div>
-              <div class="popover-body">
-                <button v-for="c in colors" class="btn btn-lg btn-light" v-on:click="color = c">
-                  <font v-bind:color="c">
-                    <i class="fas fa-pencil-alt"></i>
-                  </font>
-                </button>
-              </div>
-            </div>
-          </li>
-          <li class="nav-item">
-            <button type="button" class="btn btn-lg btn-light" v-on:click="diagram.clear">
-              <i class="far fa-file"></i>
-            </button>
-            <button type="button" class="btn btn-lg btn-light" v-on:click="$('#fileSelector').click()">
-              <i class="far fa-image"></i>
-            </button>
-            <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }" v-on:click="diagram.undo">
-              <i class="fas fa-undo"></i>
-            </button>
-            <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }" v-on:click="diagram.redo">
-              <i class="fas fa-redo"></i>
-            </button>
-            <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
-              <i class="fas fa-search-plus"></i>
-            </button>
-            <button type="button" class="btn btn-lg btn-light" v-on:click="zoomOut">
-              <i class="fas fa-search-minus"></i>
-            </button>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-              {{ tool }}
-            </a>
-            <div class="dropdown-menu">
-              <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
-                {{ t }}
+  <div id="app">
+    <header>
+      <nav class="navbar navbar-expand-sm navbar-light bg-light fixed-top">
+        <span class="navbar-brand ">
+          <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
+        </span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <button type="button" class="btn btn-lg btn-light" v-on:click="diagram.clear">
+                <i class="far fa-file"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="$('#file-selector').click()">
+                <i class="far fa-image"></i>
+              </button>
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }" v-on:click="diagram.undo">
+                <i class="fas fa-undo"></i>
+              </button>
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }" v-on:click="diagram.redo">
+                <i class="fas fa-redo"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomOut">
+                <i class="fas fa-search-minus"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="showSettings">
+                <i class="fas fa-cog"></i>
+              </button>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                {{ tool }}
               </a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-              <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
-            </a>
-            <div class="dropdown-menu">
-              <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
-                <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+              <div class="dropdown-menu">
+                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
+                  {{ t }}
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
               </a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-              <svg class="toolbox selected penbox">
-                <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
-              </svg>
-            </a>
-            <div class="dropdown-menu">
-              <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
-                <svg class="toolbox penbox">
-                  <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+              <div class="dropdown-menu">
+                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
+                  <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                <svg class="toolbox selected penbox">
+                  <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
                 </svg>
               </a>
-            </div>
-          </li>
-        </ul>
-        {{ totalUsers }} Online
-        <form id="uploadForm" method="post" enctype="multipart/form-data">
-          <input id="fileSelector" v-on:change="upload" type="file" name="file" hidden>
-        </form>
-      </div>
-    </nav>
-  </header>
-  <div id="whiteboard"></div>
-  <div id="chatbar">
-    <div id="message-log" class="fixed-bottom message-log collapse show">
+              <div class="dropdown-menu">
+                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
+                  <svg class="toolbox penbox">
+                    <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                  </svg>
+                </a>
+              </div>
+            </li>
+          </ul>
+          {{ totalUsers }} Online
+          <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <input id="file-selector" v-on:change="upload" type="file" name="file" hidden>
+          </form>
+        </div>
+      </nav>
+    </header>
+    <div id="message-log" v-bind:style="{ color: messageColor }" class="fixed-bottom message-log collapse show">
       <p class="m-2" v-for="m in messages.slice(-10)">{{ m.name + ': ' + m.message }}</p>
     </div>
     <footer>
@@ -213,7 +199,49 @@
         </div>
       </div>
     </div>
+    <div class="modal fade" id="settings" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Settings</h5>
+          </div>
+          <div class="modal-body container">
+            <div class="form-group">
+              <div class="mb-2">
+                <b>Your name</b>
+              </div>
+              <input class="form-control" type="text" placeholder="Your name" v-model="name">
+            </div>
+            <div class="form-group">
+              <div class="mb-2">
+                <b>Message color</b>
+              </div>
+              <div class="dropdown">
+                <a class="dropdown-toggle" href="#" id="dropdownMenuButton" role="button" data-toggle="dropdown">
+                  <span class="toolbox selected" v-bind:style="{ 'background-color': messageColor }"></span>
+                </a>
+                <div class="dropdown-menu">
+                  <a v-for="c in colors" v-bind:class="{ active: c === messageColor, 'dropdown-item': true }" v-on:click.prevent="messageColor = c" href="#">
+                    <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="form-group mb-2">
+              <div class="mb-2">
+                <b>Resize image before upload, if larger than</b>
+              </div>
+              <input class="form-control" type="text" placeholder="Do not resize" v-model="maxImageSize">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <div id="whiteboard"></div>
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -244,6 +272,55 @@
 
       connectWithRetry(c);
       return c;
+    }
+
+    function resizeImage(data, maxSize, done) {
+      if (!maxSize) {
+        done(false);
+        return;
+      }
+      var dataURLToBlob = dataURL => {
+        var BASE64_MARKER = ';base64,';
+        if (dataURL.indexOf(BASE64_MARKER) == -1) {
+          var parts = dataURL.split(',');
+          var contentType = parts[0].split(':')[1];
+          var raw = parts[1];
+
+          return new Blob([raw], { type: contentType });
+        }
+
+        var parts = dataURL.split(BASE64_MARKER);
+        var contentType = parts[0].split(':')[1];
+        var raw = window.atob(parts[1]);
+        var rawLength = raw.length;
+
+        var uInt8Array = new Uint8Array(rawLength);
+
+        for (var i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+
+        return new Blob([uInt8Array], { type: contentType });
+      }
+
+      var reader = new FileReader();
+      reader.onload = readerEvent => {
+        var image = new Image();
+        image.onload = function (imageEvent) {
+          var canvas = document.createElement('canvas');
+          var ratio = Math.max(image.width / maxSize, image.height / maxSize);
+          if (ratio < 1) {
+            done(false);
+            return;
+          }
+          canvas.width = image.width / ratio;
+          canvas.height = image.height / ratio;
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          done(dataURLToBlob(canvas.toDataURL('image/jpeg')));
+        }
+        image.src = readerEvent.target.result;
+      }
+      reader.readAsDataURL(data);
     }
 
     var Diagram = function (element, tools) {
@@ -435,25 +512,25 @@
     };
 
     var connection = connect('/draw', () => {
-      options.connected = true;
+      appData.connected = true;
       diagram.removeAll();
-    }, () => options.connected = false);
+    }, () => appData.connected = false);
 
     var diagram = new Diagram(SVG('whiteboard'), tools);
     diagram.onShapeUpdate((i, m) => connection.send('updateShape', i, m));
     diagram.onShapeRemove(i => connection.send('removeShape', i));
     diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
     diagram.onClear(() => connection.send('clear'));
-    diagram.onHistoryChange((p, f) => [options.hasUndo, options.hasRedo] = [p, f]);
+    diagram.onHistoryChange((p, f) => [appData.hasUndo, appData.hasRedo] = [p, f]);
     connection.on('clear', diagram.removeAll);
     connection.on('shapeUpdated', diagram.updateShape);
     connection.on('shapePatched', diagram.patchShape);
     connection.on('shapeRemoved', diagram.removeShape);
     connection.on('backgroundUpdated', i => diagram.updateBackground('/background/' + i));
-    connection.on('newMessage', (n, m) => chatData.messages.push({ name: n, message: m }));
-    connection.on('userUpdated', n => options.totalUsers = n);
+    connection.on('newMessage', (n, m) => appData.messages.push({ name: n, message: m }));
+    connection.on('userUpdated', n => appData.totalUsers = n);
 
-    var options = {
+    var appData = {
       connected: false,
       totalUsers: 1,
       hasUndo: false,
@@ -462,84 +539,39 @@
       color: 'black',
       width: 1,
       tools: Object.keys(tools),
-      colors: ['black', 'grey', 'lightgrey', 'darkred', 'red', 'orange', 'yellow', 'green', 'deepskyblue', 'navy', 'indigo', 'purple', 'brown', 'pink', 'gold', 'violet'],
-      widths: [1, 2, 4, 8]
-    };
-
-    var chatData = {
+      colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'deepskyblue', 'indigo', 'purple'],
+      widths: [1, 2, 4, 8],
       messages: [],
+      messageColor: 'black',
       name: '',
       draft: '',
-      showLog: true
+      showLog: true,
+      maxImageSize: 1920
     };
 
-    var toolApp = new Vue({
-      el: '#toolbar',
-      data: options,
+    var app = new Vue({
+      el: '#app',
+      data: appData,
       methods: {
-        upload: () => {
-          var dataURLToBlob = function (dataURL) {
-            var BASE64_MARKER = ';base64,';
-            if (dataURL.indexOf(BASE64_MARKER) == -1) {
-              var parts = dataURL.split(',');
-              var contentType = parts[0].split(':')[1];
-              var raw = parts[1];
-
-              return new Blob([raw], { type: contentType });
+        upload: function () {
+          resizeImage(event.target.files[0], this.maxImageSize, b => {
+            var formData = new FormData($('#uploadForm')[0]);
+            if (b) {
+              formData.delete('file');
+              formData.append('file', b);
             }
-
-            var parts = dataURL.split(BASE64_MARKER);
-            var contentType = parts[0].split(':')[1];
-            var raw = window.atob(parts[1]);
-            var rawLength = raw.length;
-
-            var uInt8Array = new Uint8Array(rawLength);
-
-            for (var i = 0; i < rawLength; ++i) {
-              uInt8Array[i] = raw.charCodeAt(i);
-            }
-
-            return new Blob([uInt8Array], { type: contentType });
-          }
-
-          var file = event.target.files[0];
-          var reader = new FileReader();
-          reader.onload = function (readerEvent) {
-            var image = new Image();
-            image.onload = function (imageEvent) {
-              // Resize the image
-              var canvas = document.createElement('canvas'), maxSize = 500;
-              var ratio = Math.max(image.width / maxSize, image.height / maxSize, 1);
-              var [width, height] = [image.width / ratio, image.height / ratio];
-              canvas.width = width;
-              canvas.height = height;
-              canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-              var dataUrl = canvas.toDataURL('image/jpeg');
-              var resizedImage = dataURLToBlob(dataUrl);
-              var formData = new FormData($('#uploadForm')[0]);
-              formData.append('image_data', resizedImage);
-              $.ajax({
-                type: 'POST',
-                url: '/background/upload',
-                processData: false,
-                contentType: false,
-                cache: false,
-                data: formData
-              });
-            }
-            image.src = readerEvent.target.result;
-          }
-          reader.readAsDataURL(file);
+            $.ajax({
+              type: 'POST',
+              url: '/background/upload',
+              processData: false,
+              contentType: false,
+              cache: false,
+              data: formData
+            });
+          });
         },
         zoomIn: () => diagram.zoom(1.25),
-        zoomOut: () => diagram.zoom(0.8)
-      }
-    });
-
-    var chatApp = new Vue({
-      el: '#chatbar',
-      data: chatData,
-      methods: {
+        zoomOut: () => diagram.zoom(0.8),
         sendMessage: function () {
           if (!this.draft) return;
           this.messages.push({ name: this.name, message: this.draft });
@@ -547,7 +579,8 @@
           this.draft = '';
         },
         setName: function () { if (this.name) $('#inputName').modal('toggle'); },
-        toggleLog: function () { this.showLog = !this.showLog; }
+        toggleLog: function () { this.showLog = !this.showLog; },
+        showSettings: () => $("#settings").modal({ backdrop: 'static', keyboard: false })
       }
     });
 
@@ -575,12 +608,12 @@
         e.preventDefault();
       };
       var start = (x, y) => {
-        if (!options.connected) return;
-        var tool = tools[options.tool];
-        diagram.startShape(options.tool, options.color, options.width, x, y);
+        if (!appData.connected) return;
+        var tool = tools[appData.tool];
+        diagram.startShape(appData.tool, appData.color, appData.width, x, y);
       };
-      var move = (x, y) => { if (options.connected) diagram.drawShape(x, y); }
-      var end = () => { if (options.connected) diagram.endShape(); }
+      var move = (x, y) => { if (appData.connected) diagram.drawShape(x, y); }
+      var end = () => { if (appData.connected) diagram.endShape(); }
       $('#whiteboard')
         .on('mousedown', e => start(e.offsetX, e.offsetY))
         .on('mouseup', e => end(e.offsetX, e.offsetY))
@@ -605,20 +638,6 @@
             w < 1200 ? 5 / 6 :
               1);
     })();
-
-    $(function () {
-      $("[data-toggle=popover]").popover({
-        html: true,
-        content: function () {
-          var content = $(this).attr("data-popover-content");
-          return $(content).children(".popover-body").html();
-        },
-        title: function () {
-          var title = $(this).attr("data-popover-content");
-          return $(title).children(".popover-heading").html();
-        }
-      });
-    });
   </script>
 </body>
 
