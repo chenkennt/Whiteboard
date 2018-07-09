@@ -588,7 +588,7 @@
     (function () {
       // hook mouse and touch events for whiteboard
       var touchStart = e => {
-        start(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
+        start(e.changedTouches[0].pageX, e.changedTouches[0].pageY - 66);
         for (var i = 1; i < e.changedTouches.length; i++) {
           move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
         }
@@ -596,13 +596,13 @@
       };
       var touchMove = e => {
         for (var i = 0; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
+          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY - 66);
         }
         e.preventDefault();
       };
       var touchEnd = e => {
         for (var i = 0; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
+          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY - 66);
         }
         end();
         e.preventDefault();
