@@ -7,7 +7,6 @@ WORKDIR /app
 # copy csproj and restore as distinct layers
 RUN mkdir Whiteboard && cd Whiteboard/
 COPY *.csproj ./
-COPY NuGet.config ./
 RUN dotnet restore
 
 # copy everything else and build

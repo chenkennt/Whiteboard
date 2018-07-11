@@ -69,6 +69,7 @@
       margin-bottom: 50px;
       pointer-events: none;
       font-weight: bold;
+      text-shadow: 1px 1px 2px white;
     }
 
     .top-btn-group {
@@ -489,7 +490,7 @@
     var modes = {
       panAndZoom: {
         startOne: p => 0,
-        moveOne: (p, pp) => diagram.moveViewbox(pp[0] - p[0], pp[1] - p[1]),
+        moveOne: (p, pp) => diagram.pan(pp[0] - p[0], pp[1] - p[1]),
         startTwo: (p1, p2) => 0,
         moveTwo: (p1, p2, pp1, pp2) => {
           var r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
