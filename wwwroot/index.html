@@ -660,13 +660,13 @@
           end();
           mode = null;
         }).on('touchstart', e => {
-          if (e.targetTouches.length > 2) return;
+          if (e.touches.length > 2) return;
           if (prev) end();
-          mode = e.targetTouches.length === 1 ? 'draw' : 'panAndZoom';
-          start(map(e.targetTouches, t => [t.pageX, t.pageY - 66]));
+          mode = e.touches.length === 1 ? 'draw' : 'panAndZoom';
+          start(map(e.touches, t => [t.pageX, t.pageY - 66]));
           e.preventDefault();
         }).on('touchmove', e => {
-          move(map(e.targetTouches, t => [t.pageX, t.pageY - 66]));
+          move(map(e.touches, t => [t.pageX, t.pageY - 66]));
           e.preventDefault();
         }).on('touchend', e => {
           end();
