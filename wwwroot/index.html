@@ -432,7 +432,7 @@
         element.viewbox(v.x, v.y, w / scale, h / scale);
       }
 
-      function moveViewbox(dx, dy) {
+      function pan(dx, dy) {
         var v = element.viewbox();
         offset = [v.x + dx / scale, v.y + dy / scale];
         element.viewbox(offset[0], offset[1], v.width, v.height);
@@ -474,7 +474,7 @@
         removeAll: removeAll,
         updateBackground: updateBackground,
         resizeViewbox: resizeViewbox,
-        moveViewbox: moveViewbox,
+        pan: pan,
         zoom: zoom,
         undo: undo,
         redo: redo,
@@ -491,7 +491,12 @@
         startOne: p => 0,
         moveOne: (p, pp) => diagram.moveViewbox(pp[0] - p[0], pp[1] - p[1]),
         startTwo: (p1, p2) => 0,
-        moveTwo: (p1, p2, pp1, pp2) => 0,
+        moveTwo: (p1, p2, pp1, pp2) => {
+          var r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
+                  / ((pp2[0] - pp1[0]) * (pp2[0] - pp1[0]) + (pp2[1] - pp1[1]) * (pp2[1] - pp1[1])));
+          diagram.pan(pp1[0] - p1[0] / r, pp1[1] - p1[1] / r);
+          diagram.zoom(r);
+        },
         end: () => 0
       },
       draw: {
@@ -615,23 +620,34 @@
       // hook mouse and touch events for whiteboard
       var mode;
       var prev;
+      var started;
       var start = p => {
         if (!mode) return;
-        if (p.length === 1) modes[mode].startOne(p[0]);
-        else if (p.length === 2) modes[mode].startTwo(p[0], p[1]);
         prev = p;
       };
       var move = p => {
         if (!mode) return;
         if (prev.length !== p.length) return;
+        // do not start if the move is too small
+        if (!started && p.length === 1 && Math.abs(p[0][0] - prev[0][0]) < 5 && Math.abs(p[0][1] - prev[0][1]) < 5) return;
+        else {
+          started = true;
+          if (p.length === 1) modes[mode].startOne(prev[0]);
+          else if (p.length === 2) modes[mode].startTwo(prev[0], prev[1]);
+        }
         if (p.length === 1) modes[mode].moveOne(p[0], prev[0]);
         else if (p.length === 2) modes[mode].moveTwo(p[0], p[1], prev[0], prev[1]);
         prev = p;
       };
       var end = p => {
         if (!mode) return;
-        modes[mode].end();
-        prevTouch = null;
+        if (started) modes[mode].end();
+        prev = started = null;
+      };
+      var map = (ts, f) => {
+        var ps = [];
+        for (var i = 0; i < ts.length; i++) ps.push(f(ts[i]));
+        return ps;
       };
       $('#whiteboard')
         .on('mousedown', e => {
@@ -644,12 +660,12 @@
           mode = null;
         }).on('touchstart', e => {
           if (e.targetTouches.length > 2) return;
-          if (prevTouch) modes[mode].end();
+          if (prev) end();
           mode = e.targetTouches.length === 1 ? 'draw' : 'panAndZoom';
-          start(e.targetTouches.map(t => [t.pageX, t.pageY - 66]));
+          start(map(e.targetTouches, t => [t.pageX, t.pageY - 66]));
           e.preventDefault();
         }).on('touchmove', e => {
-          move(e.targetTouches.map(t => [t.pageX, t.pageY - 66]));
+          move(map(e.targetTouches, t => [t.pageX, t.pageY - 66]));
           e.preventDefault();
         }).on('touchend', e => {
           end();

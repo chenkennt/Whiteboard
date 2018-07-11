@@ -20,14 +20,14 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
         {
             services.AddSingleton<Diagram>();
             services.AddMvc();
-            services.AddSignalR().AddAzureSignalR();
+            services.AddSignalR();//.AddAzureSignalR();
         }
 
         public void Configure(IApplicationBuilder app)
         {
             app.UseMvc();
             app.UseFileServer();
-            app.UseAzureSignalR(routes =>
+            app.UseSignalR(routes =>
             {
                 routes.MapHub<DrawHub>("/draw");
             });
