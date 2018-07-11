@@ -23,8 +23,7 @@
     }
 
     .disconnected {
-      -webkit-filter: grayscale(100%);
-      /* Safari 6.0 - 9.0 */
+      -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
       filter: grayscale(100%);
     }
 
@@ -327,8 +326,8 @@
       var timestamp = 0;
       var buffer = [];
       var background;
-      var backgroundSize;
       var scale = 1;
+      var offset = [0, 0];
 
       var shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => { };
 
@@ -347,16 +346,20 @@
         historyChangeCallback(past.length > 0, future.length > 0);
       }
 
-      function translate(data, s) {
-        return data.map(d => d * (s || scale));
+      function applyStyle(e, c, w) {
+        return e.fill('none').stroke({ color: c, width: w, linecap: 'round' });
+      }
+
+      function translate(x, y) {
+        return [offset[0] + x / scale , offset[1] + y / scale];
       }
 
       function startShape(k, c, w, x, y) {
         if (id) return;
         id = generateId();
-        [x, y] = translate([x, y], 1 / scale);
+        [x, y] = translate(x, y);
         var m = { kind: k, color: c, width: w, data: tools[k].start(x, y) };
-        shapes[id] = { view: tools[k].draw(element, c, w, translate(m.data)), model: m };
+        shapes[id] = { view: applyStyle(tools[k].draw(element, m.data), c, w), model: m };
         future = [];
         past.push(id);
         historyChange();
@@ -365,11 +368,11 @@
 
       function drawShape(x, y) {
         if (!id) return;
-        [x, y] = translate([x, y], 1 / scale);
+        [x, y] = translate(x, y);
         var s = shapes[id];
         var t = tools[s.model.kind];
         var d = t.move(x, y, s.model.data);
-        t.update(s.view, translate(s.model.data));
+        t.update(s.view, s.model.data);
         if (d) {
           buffer = buffer.concat(d);
           tryNotify(() => {
@@ -389,12 +392,12 @@
       }
 
       function updateShape(i, m) {
-        if (shapes[i]) tools[m.kind].update(shapes[i].view, translate(shapes[i].model.data = m.data));
-        else shapes[i] = { view: tools[m.kind].draw(element, m.color, m.width, translate(m.data)), model: m };
+        if (shapes[i]) tools[m.kind].update(shapes[i].view, shapes[i].model.data = m.data);
+        else shapes[i] = { view: applyStyle(tools[m.kind].draw(element, m.data), m.color, m.width), model: m };
       }
 
       function patchShape(i, d) {
-        if (shapes[i]) tools[shapes[i].model.kind].update(shapes[i].view, translate(shapes[i].model.data = shapes[i].model.data.concat(d)));
+        if (shapes[i]) tools[shapes[i].model.kind].update(shapes[i].view, shapes[i].model.data = shapes[i].model.data.concat(d));
       }
 
       function removeShape(i) {
@@ -421,16 +424,24 @@
 
       function updateBackground(file) {
         if (background) background.remove();
-        background = element.image(file).loaded(function (loader) {
-          backgroundSize = [loader.width, loader.height];
-          this.size(loader.width * scale, loader.height * scale);
-        }).back();
+        background = element.image(file).back();
+      }
+
+      function resizeViewbox(w, h) {
+        var v = element.viewbox();
+        element.viewbox(v.x, v.y, w / scale, h / scale);
+      }
+
+      function moveViewbox(dx, dy) {
+        var v = element.viewbox();
+        offset = [v.x + dx / scale, v.y + dy / scale];
+        element.viewbox(offset[0], offset[1], v.width, v.height);
       }
 
       function zoom(r) {
         scale *= r;
-        for (var i in shapes) tools[shapes[i].model.kind].update(shapes[i].view, translate(shapes[i].model.data));
-        if (background) background.size(backgroundSize[0] * scale, backgroundSize[1] * scale);
+        var v = element.viewbox();
+        element.viewbox(v.x, v.y, v.width / r, v.height / r);
       }
 
       function undo() {
@@ -462,6 +473,8 @@
         clear: clear,
         removeAll: removeAll,
         updateBackground: updateBackground,
+        resizeViewbox: resizeViewbox,
+        moveViewbox: moveViewbox,
         zoom: zoom,
         undo: undo,
         redo: redo,
@@ -473,37 +486,52 @@
       };
     };
 
-    var draw = (f, c, w) => f.fill('none').stroke({ color: c, width: w, linecap: 'round' });
+    var modes = {
+      panAndZoom: {
+        startOne: p => 0,
+        moveOne: (p, pp) => diagram.moveViewbox(pp[0] - p[0], pp[1] - p[1]),
+        startTwo: (p1, p2) => 0,
+        moveTwo: (p1, p2, pp1, pp2) => 0,
+        end: () => 0
+      },
+      draw: {
+        startOne: p => { if (appData.connected) diagram.startShape(appData.tool, appData.color, appData.width, p[0], p[1]); },
+        moveOne: (p, pp) => { if (appData.connected) diagram.drawShape(p[0], p[1]); },
+        startTwo: () => 0,
+        moveTwo: () => 0,
+        end: () => { if (appData.connected) diagram.endShape(); }
+      }
+    };
 
     var tools = {
       polyline: {
         start: (x, y) => [x, y],
         move: (x, y, d) => { d.push(x, y); return [x, y]; },
-        draw: (b, c, w, d) => draw(b.polyline(d), c, w),
+        draw: (b, d) => b.polyline(d),
         update: (e, d) => e.plot(d)
       },
       line: {
         start: (x, y) => [x, y, x, y],
         move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, c, w, d) => draw(b.line(d), c, w),
+        draw: (b, d) => b.line(d),
         update: (e, d) => e.plot(d)
       },
       rect: {
         start: (x, y) => [x, y, x, y],
         move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, c, w, d) => draw(b.rect(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).move(Math.min(d[0], d[2]), Math.min(d[1], d[3])), c, w),
+        draw: (b, d) => b.rect(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).move(Math.min(d[0], d[2]), Math.min(d[1], d[3])),
         update: (e, d) => e.x(Math.min(d[2], d[0])).y(Math.min(d[1], d[3])).size(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1]))
       },
       circle: {
         start: (x, y) => [x, y, 0],
         move: (x, y, d) => { d[2] = Math.floor(Math.sqrt((d[0] - x) * (d[0] - x) + (d[1] - y) * (d[1] - y))) },
-        draw: (b, c, w, d) => draw(b.circle(d[2] * 2).cx(d[0]).cy(d[1]), c, w),
+        draw: (b, d) => b.circle(d[2] * 2).cx(d[0]).cy(d[1]),
         update: (e, d) => e.cx(d[0]).cy(d[1]).radius(d[2])
       },
       ellipse: {
         start: (x, y) => [x, y, x, y],
         move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, c, w, d) => draw(b.ellipse(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2), c, w),
+        draw: (b, d) => b.ellipse(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2),
         update: (e, d) => e.cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2).radius(Math.abs(d[2] - d[0]) / 2, Math.abs(d[3] - d[1]) / 2)
       }
     };
@@ -563,7 +591,8 @@
               processData: false,
               contentType: false,
               cache: false,
-              data: formData
+              data: formData,
+              success: () => $('#uploadForm')[0].reset()
             });
           });
         },
@@ -584,40 +613,53 @@
     // UI initialization
     (function () {
       // hook mouse and touch events for whiteboard
-      var touchStart = e => {
-        start(e.changedTouches[0].pageX, e.changedTouches[0].pageY - 66);
-        for (var i = 1; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY);
-        }
-        e.preventDefault();
+      var mode;
+      var prev;
+      var start = p => {
+        if (!mode) return;
+        if (p.length === 1) modes[mode].startOne(p[0]);
+        else if (p.length === 2) modes[mode].startTwo(p[0], p[1]);
+        prev = p;
       };
-      var touchMove = e => {
-        for (var i = 0; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY - 66);
-        }
-        e.preventDefault();
+      var move = p => {
+        if (!mode) return;
+        if (prev.length !== p.length) return;
+        if (p.length === 1) modes[mode].moveOne(p[0], prev[0]);
+        else if (p.length === 2) modes[mode].moveTwo(p[0], p[1], prev[0], prev[1]);
+        prev = p;
       };
-      var touchEnd = e => {
-        for (var i = 0; i < e.changedTouches.length; i++) {
-          move(e.changedTouches[i].pageX, e.changedTouches[i].pageY - 66);
-        }
-        end();
-        e.preventDefault();
+      var end = p => {
+        if (!mode) return;
+        modes[mode].end();
+        prevTouch = null;
       };
-      var start = (x, y) => {
-        if (!appData.connected) return;
-        var tool = tools[appData.tool];
-        diagram.startShape(appData.tool, appData.color, appData.width, x, y);
-      };
-      var move = (x, y) => { if (appData.connected) diagram.drawShape(x, y); }
-      var end = () => { if (appData.connected) diagram.endShape(); }
       $('#whiteboard')
-        .on('mousedown', e => start(e.offsetX, e.offsetY))
-        .on('mouseup', e => end(e.offsetX, e.offsetY))
-        .on('mousemove', e => move(e.offsetX, e.offsetY))
-        .on('touchstart', touchStart)
-        .on('touchend', touchEnd)
-        .on('touchmove', touchMove);
+        .on('mousedown', e => {
+          mode = e.ctrlKey ? 'panAndZoom' : 'draw';
+          start([[e.offsetX, e.offsetY]]);
+        }).on('mousemove', e => {
+          move([[e.offsetX, e.offsetY]]);
+        }).on('mouseup', e => {
+          end();
+          mode = null;
+        }).on('touchstart', e => {
+          if (e.targetTouches.length > 2) return;
+          if (prevTouch) modes[mode].end();
+          mode = e.targetTouches.length === 1 ? 'draw' : 'panAndZoom';
+          start(e.targetTouches.map(t => [t.pageX, t.pageY - 66]));
+          e.preventDefault();
+        }).on('touchmove', e => {
+          move(e.targetTouches.map(t => [t.pageX, t.pageY - 66]));
+          e.preventDefault();
+        }).on('touchend', e => {
+          end();
+          mode = null;
+          e.preventDefault();
+        }).on('touchcancel', e => {
+          end();
+          mode = null;
+          e.preventDefault();
+        });
 
       // disable keyboard events for username dialog
       $("#inputName").on('shown.bs.modal', () => {
@@ -630,10 +672,13 @@
       // update zoom level for small devices
       var w = window.innerWidth;
       diagram.zoom(w < 576 ? 1 / 3 :
-        w < 768 ? 1 / 2 :
-          w < 992 ? 2 / 3 :
-            w < 1200 ? 5 / 6 :
-              1);
+                   w < 768 ? 1 / 2 :
+                   w < 992 ? 2 / 3 :
+                   w < 1200 ? 5 / 6 :
+                   1);
+
+      // hook window resize event to set correct viewbox size
+      window.onresize = () => diagram.resizeViewbox($('#whiteboard').width(), $('#whiteboard').height());
     })();
   </script>
 </body>
