@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
+    integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css"
+    integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
+  <title>Whiteboard</title>
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <nav class="navbar navbar-expand-sm navbar-light bg-light fixed-top">
+        <a href="#" class="navbar-brand" v-on:click.prevent="showSettings">
+          <img id="logo" src="images/signalr-logo.png" alt="logo"
+            v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <button type="button" class="btn btn-lg btn-light" v-on:click="diagram.clear">
+                <i class="far fa-file"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="$('#file-selector').click()">
+                <i class="far fa-image"></i>
+              </button>
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }"
+                v-on:click="diagram.undo">
+                <i class="fas fa-undo"></i>
+              </button>
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }"
+                v-on:click="diagram.redo">
+                <i class="fas fa-redo"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomOut">
+                <i class="fas fa-search-minus"></i>
+              </button>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                {{ tool }}
+              </a>
+              <div class="dropdown-menu">
+                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }"
+                  v-on:click.prevent="tool = t" href="#">
+                  {{ t }}
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
+              </a>
+              <div class="dropdown-menu">
+                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }"
+                  v-on:click.prevent="color = c" href="#">
+                  <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                </a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                <svg class="toolbox selected penbox">
+                  <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
+                </svg>
+              </a>
+              <div class="dropdown-menu">
+                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }"
+                  v-on:click.prevent="width = w" href="#">
+                  <svg class="toolbox penbox">
+                    <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                  </svg>
+                </a>
+              </div>
+            </li>
+          </ul>
+          {{ totalUsers }} Online
+          <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <input id="file-selector" v-on:change="upload" type="file" name="file" hidden>
+          </form>
+        </div>
+      </nav>
+    </header>
+    <div id="message-log" v-bind:style="{ color: messageColor }" class="fixed-bottom message-log collapse show">
+      <p class="m-2" v-for="m in messages.slice(-10)">{{ m.name + ': ' + m.message }}</p>
+    </div>
+    <footer>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-bottom">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <button class="btn btn-outline-info" data-toggle="collapse" data-target="#message-log">
+              <i class="far fa-file-alt"></i>
+            </button>
+          </div>
+          <input class="form-control" type="text" placeholder="Type here to chat..." v-model="draft"
+            v-on:keypress.enter="sendMessage">
+          <div class="input-group-append">
+            <button class="btn btn-outline-success" v-bind:disabled="!draft" v-on:click="sendMessage">
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </footer>
+    <div class="modal fade" id="inputName" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Please input your name</h5>
+          </div>
+          <div class="modal-body">
+            <input id="username" class="form-control" type="text" placeholder="Your name" v-model="name"
+              v-on:keypress.enter="setName">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="settings" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Settings</h5>
+          </div>
+          <div class="modal-body container">
+            <div class="form-group">
+              <div class="mb-2">
+                <b>Your name</b>
+              </div>
+              <input class="form-control" type="text" placeholder="Your name" v-model="name">
+            </div>
+            <div class="form-group">
+              <div class="mb-2">
+                <b>Message color</b>
+              </div>
+              <div class="dropdown">
+                <a class="dropdown-toggle" href="#" id="dropdownMenuButton" role="button" data-toggle="dropdown">
+                  <span class="toolbox selected" v-bind:style="{ 'background-color': messageColor }"></span>
+                </a>
+                <div class="dropdown-menu">
+                  <a v-for="c in colors" v-bind:class="{ active: c === messageColor, 'dropdown-item': true }"
+                    v-on:click.prevent="messageColor = c" href="#">
+                    <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="mb-2">
+                <b>Resize image before upload, if larger than</b>
+              </div>
+              <input class="form-control" type="text" placeholder="Do not resize" v-model="maxImageSize">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="whiteboard"></div>
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
+    integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
+    integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="js/connection.js"></script>
+  <script src="js/diagram.js"></script>
+  <script>
+    function resizeImage(data, maxSize, done) {
+      if (!maxSize) {
+        done(false);
+        return;
+      }
+      var dataURLToBlob = dataURL => {
+        var BASE64_MARKER = ';base64,';
+        if (dataURL.indexOf(BASE64_MARKER) == -1) {
+          var parts = dataURL.split(',');
+          var contentType = parts[0].split(':')[1];
+          var raw = parts[1];
+
+          return new Blob([raw], { type: contentType });
+        }
+
+        var parts = dataURL.split(BASE64_MARKER);
+        var contentType = parts[0].split(':')[1];
+        var raw = window.atob(parts[1]);
+        var rawLength = raw.length;
+
+        var uInt8Array = new Uint8Array(rawLength);
+
+        for (var i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+
+        return new Blob([uInt8Array], { type: contentType });
+      }
+
+      var reader = new FileReader();
+      reader.onload = readerEvent => {
+        var image = new Image();
+        image.onload = function (imageEvent) {
+          var canvas = document.createElement('canvas');
+          var ratio = Math.max(image.width / maxSize, image.height / maxSize);
+          if (ratio < 1) {
+            done(false);
+            return;
+          }
+          canvas.width = image.width / ratio;
+          canvas.height = image.height / ratio;
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          done(dataURLToBlob(canvas.toDataURL('image/jpeg')));
+        }
+        image.src = readerEvent.target.result;
+      }
+      reader.readAsDataURL(data);
+    }
+
+    axios.get('/draw').then(res => {
+      var modes = {
+        panAndZoom: {
+          startOne: p => 0,
+          moveOne: (p, pp) => diagram.pan(pp[0] - p[0], pp[1] - p[1]),
+          startTwo: (p1, p2) => 0,
+          moveTwo: (p1, p2, pp1, pp2) => {
+            var r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
+              / ((pp2[0] - pp1[0]) * (pp2[0] - pp1[0]) + (pp2[1] - pp1[1]) * (pp2[1] - pp1[1])));
+            diagram.pan(pp1[0] - p1[0] / r, pp1[1] - p1[1] / r);
+            diagram.zoom(r);
+          },
+          end: () => 0
+        },
+        draw: {
+          startOne: p => { if (appData.connected) diagram.startShape(appData.tool, appData.color, appData.width, p[0], p[1]); },
+          moveOne: (p, pp) => { if (appData.connected) diagram.drawShape(p[0], p[1]); },
+          startTwo: () => 0,
+          moveTwo: () => 0,
+          end: () => { if (appData.connected) diagram.endShape(); }
+        }
+      };
+
+      var tools = {
+        polyline: {
+          start: (x, y) => [x, y],
+          move: (x, y, d) => { d.push(x, y); return [x, y]; },
+          draw: (b, d) => b.polyline(d),
+          update: (e, d) => e.plot(d)
+        },
+        line: {
+          start: (x, y) => [x, y, x, y],
+          move: (x, y, d) => { d[2] = x; d[3] = y; },
+          draw: (b, d) => b.line(d),
+          update: (e, d) => e.plot(d)
+        },
+        rect: {
+          start: (x, y) => [x, y, x, y],
+          move: (x, y, d) => { d[2] = x; d[3] = y; },
+          draw: (b, d) => b.rect(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).move(Math.min(d[0], d[2]), Math.min(d[1], d[3])),
+          update: (e, d) => e.x(Math.min(d[2], d[0])).y(Math.min(d[1], d[3])).size(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1]))
+        },
+        circle: {
+          start: (x, y) => [x, y, 0],
+          move: (x, y, d) => { d[2] = Math.floor(Math.sqrt((d[0] - x) * (d[0] - x) + (d[1] - y) * (d[1] - y))) },
+          draw: (b, d) => b.circle(d[2] * 2).cx(d[0]).cy(d[1]),
+          update: (e, d) => e.cx(d[0]).cy(d[1]).radius(d[2])
+        },
+        ellipse: {
+          start: (x, y) => [x, y, x, y],
+          move: (x, y, d) => { d[2] = x; d[3] = y; },
+          draw: (b, d) => b.ellipse(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2),
+          update: (e, d) => e.cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2).radius(Math.abs(d[2] - d[0]) / 2, Math.abs(d[3] - d[1]) / 2)
+        }
+      };
+
+      var connection = new Connection(res.data);
+      connection.on('connected', () => {
+        appData.connected = true;
+        diagram.removeAll();
+      });
+      connection.on('disconnected', () => appData.connected = false);
+
+      var diagram = new Diagram(SVG('whiteboard'), tools);
+      var author = Math.random().toString(36).substr(2, 8);
+      diagram.onShapeUpdate((i, m) => connection.send('updateShape', [author, i, m]));
+      diagram.onShapeRemove(i => connection.send('removeShape', [author, i]));
+      diagram.onShapePatch((i, d) => connection.send('patchShape', [author, i, d]));
+      diagram.onClear(() => connection.send('clear', author));
+      diagram.onHistoryChange((p, f) => [appData.hasUndo, appData.hasRedo] = [p, f]);
+      connection.on('clear', a => author !== a && diagram.removeAll());
+      connection.on('shapeUpdated', ([a, i, m]) => author !== a && diagram.updateShape(i, m));
+      connection.on('shapePatched', ([a, i, d]) => author !== a && diagram.patchShape(i, d));
+      connection.on('shapeRemoved', ([a, i]) => author !== a && diagram.removeShape(i));
+      connection.on('backgroundUpdated', i => diagram.updateBackground('/background/' + i));
+      connection.on('newMessage', ([a, n, m]) => author !== a && appData.messages.push({ name: n, message: m }));
+      connection.on('userUpdated', n => appData.totalUsers = n);
+
+      var appData = {
+        connected: false,
+        totalUsers: 1,
+        hasUndo: false,
+        hasRedo: false,
+        tool: 'polyline',
+        color: 'black',
+        width: 1,
+        tools: Object.keys(tools),
+        colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'deepskyblue', 'indigo', 'purple'],
+        widths: [1, 2, 4, 8],
+        messages: [],
+        messageColor: 'black',
+        name: '',
+        draft: '',
+        showLog: true,
+        maxImageSize: 1920,
+        diagram: diagram
+      };
+
+      var app = new Vue({
+        el: '#app',
+        data: appData,
+        methods: {
+          upload: function () {
+            resizeImage(event.target.files[0], this.maxImageSize, b => {
+              var formData = new FormData($('#uploadForm')[0]);
+              if (b) {
+                formData.delete('file');
+                formData.append('file', b);
+              }
+              $.ajax({
+                type: 'POST',
+                url: '/background/upload',
+                processData: false,
+                contentType: false,
+                cache: false,
+                data: formData,
+                success: () => $('#uploadForm')[0].reset()
+              });
+            });
+          },
+          zoomIn: () => diagram.zoom(1.25),
+          zoomOut: () => diagram.zoom(0.8),
+          sendMessage: function () {
+            if (!this.draft) return;
+            this.messages.push({ name: this.name, message: this.draft });
+            connection.send('sendMessage', [author, this.name, this.draft]);
+            this.draft = '';
+          },
+          setName: function () { if (this.name) $('#inputName').modal('toggle'); },
+          toggleLog: function () { this.showLog = !this.showLog; },
+          showSettings: () => $("#settings").modal({ backdrop: 'static', keyboard: false })
+        }
+      });
+
+      // UI initialization
+      (function () {
+        // hook mouse and touch events for whiteboard
+        var mode;
+        var prev;
+        var started;
+        var start = p => {
+          if (!mode) return;
+          prev = p;
+        };
+        var move = p => {
+          if (!mode) return;
+          if (prev.length !== p.length) return;
+          // do not start if the move is too small
+          if (!started && p.length === 1 && Math.abs(p[0][0] - prev[0][0]) < 5 && Math.abs(p[0][1] - prev[0][1]) < 5) return;
+          else {
+            started = true;
+            if (p.length === 1) modes[mode].startOne(prev[0]);
+            else if (p.length === 2) modes[mode].startTwo(prev[0], prev[1]);
+          }
+          if (p.length === 1) modes[mode].moveOne(p[0], prev[0]);
+          else if (p.length === 2) modes[mode].moveTwo(p[0], p[1], prev[0], prev[1]);
+          prev = p;
+        };
+        var end = p => {
+          if (!mode) return;
+          if (started) modes[mode].end();
+          prev = started = null;
+        };
+        var map = (ts, f) => {
+          var ps = [];
+          for (var i = 0; i < ts.length; i++) ps.push(f(ts[i]));
+          return ps;
+        };
+        $('#whiteboard')
+          .on('mousedown', e => {
+            mode = e.ctrlKey ? 'panAndZoom' : 'draw';
+            start([[e.offsetX, e.offsetY]]);
+          }).on('mousemove', e => {
+            move([[e.offsetX, e.offsetY]]);
+          }).on('mouseup', e => {
+            end();
+            mode = null;
+          }).on('touchstart', e => {
+            if (e.touches.length > 2) return;
+            if (prev) end();
+            mode = e.touches.length === 1 ? 'draw' : 'panAndZoom';
+            start(map(e.touches, t => [t.pageX, t.pageY - 66]));
+            e.preventDefault();
+          }).on('touchmove', e => {
+            move(map(e.touches, t => [t.pageX, t.pageY - 66]));
+            e.preventDefault();
+          }).on('touchend', e => {
+            end();
+            mode = null;
+            e.preventDefault();
+          }).on('touchcancel', e => {
+            end();
+            mode = null;
+            e.preventDefault();
+          });
+
+        // disable keyboard events for username dialog
+        $("#inputName").on('shown.bs.modal', () => {
+          $('#username').focus();
+        }).modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+
+        // update zoom level for small devices
+        var w = window.innerWidth;
+        diagram.zoom(w < 576 ? 1 / 3 :
+          w < 768 ? 1 / 2 :
+            w < 992 ? 2 / 3 :
+              w < 1200 ? 5 / 6 :
+                1);
+
+        // hook window resize event to set correct viewbox size
+        window.onresize = () => diagram.resizeViewbox($('#whiteboard').width(), $('#whiteboard').height());
+      })();
+    });
+  </script>
+</body>
+
+</html>
