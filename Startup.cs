@@ -25,9 +25,9 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseMvc();
+            app.UseRouting();
             app.UseFileServer();
-            app.UseAzureSignalR(routes =>
+            app.UseEndpoints(routes =>
             {
                 routes.MapHub<DrawHub>("/draw");
             });
