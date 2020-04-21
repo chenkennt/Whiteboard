@@ -2,7 +2,7 @@
 
 This is a sample project to demonstrate how to build a web application for real time collaboration using Azure, ASP.NET Core and other related technologies. This sample application includes the following features:
 
-* A whiteboard that anyone can paint on it and others can see your painting in real time
+* A whiteboard that anyone can paint on it and others can see you painting in real time
 * Painting features:
   1. Basic paint tools (freehand, line, rectangle, circle, ellipse), color and stroke thickness
   2. Upload a background image
@@ -13,7 +13,7 @@ This is a sample project to demonstrate how to build a web application for real 
 
 This application is based on the following technologies:
 
-* For frontend: HTML5/javascript, bootstrap and vue.js (for frontend)
+* For frontend: HTML5/javascript, bootstrap and vue.js
 * For backend: ASP.NET Core (for SignalR version), or node.js + express.js (for websocket version)
 * For realtime communication: WebSocket, SignalR and Azure SignalR Service
 
@@ -66,7 +66,7 @@ To build and run it locally:
    npm start
    ```
 
-3. Now you need a public accessible endpoint so that Azure SignalR Service can invoke you. We  and configure upstream urls for WebSocket callbacks. We can use [ngrok](https://www.ngrok.com/) to achieve it. Install ngrok and use the following command to start it:
+3. Now you need a public accessible endpoint so that Azure SignalR Service can invoke you. We can use [ngrok](https://www.ngrok.com/) to achieve it. Install ngrok and use the following command to start it:
    ```
    ngrok http 8080
    ```
@@ -93,7 +93,7 @@ Then use the following command to deploy it to Azure Web App:
 az webapp deployment source config-zip --src <path_to_zip_file> -n <app_name> -g <resource_group_name>
 ```
 
-Don't forget to set Azure SignalR Service connection string to the application settings. You can do it through portal or using Azure CLI:
+Don't forget to set Azure SignalR Service connection string in the application settings. You can do it through portal or using Azure CLI:
 ```
 az webapp config appsettings set --resource-group <resource_group_name> --name <app_name> \
    --setting Azure__SignalR__ConnectionString="<connection_string>"
