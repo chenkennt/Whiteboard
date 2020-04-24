@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const app = express();
-const AzureWebsocket = require('./azure-websocket.js');
+const AzureWebsocket = require('azure-websocket');
 
 let diagram = {
   shapes: {},
