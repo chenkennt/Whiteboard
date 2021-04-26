@@ -1,7 +1,7 @@
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const { WebPubSubServiceClient } = require('@azure/web-pubsub');
-const { WebPubSubCloudEventsHandler } = require('@azure/web-pubsub-express');
+const { WebPubSubEventHandler } = require('@azure/web-pubsub-express');
 
 const app = express();
 
@@ -13,7 +13,7 @@ let diagram = {
 
 const hubName = 'draw';
 let serviceClient = new WebPubSubServiceClient(process.argv[2] || process.env.Web_PubSub_ConnectionString, hubName);
-let handler = new WebPubSubCloudEventsHandler(hubName, ['*'], {
+let handler = new WebPubSubEventHandler(hubName, ['*'], {
   path: '/eventhandler',
   onConnected: async req => {
     let res = [];
@@ -120,5 +120,5 @@ app
     } else res.status(404).end();
   });
 
-app.use(express.static('public'));
+app.use(express.static('dist'));
 app.listen(8080, () => console.log('app started'));

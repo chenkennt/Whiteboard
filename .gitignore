@@ -3,4 +3,5 @@
 bin/
 obj/
 node_modules/
+dist/
 *.zip
