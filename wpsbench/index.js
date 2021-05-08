@@ -15,6 +15,7 @@ const generateId = () => Math.random().toString(36).substr(2, 8);
 const shapes = {};
 let startTime = new Date();
 let shapesSent = 0, shapesReceived = 0, allShapesReceived = 0, totalLatency = 0, latency = [], timeReceived = [];
+let totalPoints = 0;
 let clients = 0;
 let lastConnectTime;
 
@@ -61,12 +62,14 @@ async function testOne(id) {
       shapes[currentShape[0]] = new Date();
       updateShape(ws, author, currentShape[0], currentShape[1]);
       shapesSent++;
+      totalPoints++;
     }
 
     let buf = [];
     let p = currentShape[1].data.slice(-2);
     for (let i = 0; i < drawSpeed; i++) {
       buf = buf.concat(p = randomWalk(p));
+      totalPoints++;
     }
     currentShape[1].data = currentShape[1].data.concat(buf);
     patchShape(ws, author, currentShape[0], buf);
@@ -101,7 +104,7 @@ function test() {
   for (; clients < minClients; clients++) testOne(clients);
   if (clients < maxClients && new Date() - lastConnectTime >= testInterval * 1000) testOne(clients++);
   let l = latency.slice(-6).reduce((a, i) => a + i, 0) / timeReceived.slice(-6).reduce((a, i) => a + i, 0);
-  console.log(`shapes sent: ${shapesSent}, shapes received: ${shapesReceived}, average latency: ${l}`);
+  console.log(`time: ${(new Date() - startTime) / 1000}, sent: ${shapesSent}/${totalPoints}, received: ${shapesReceived}, latency: ${l.toFixed(2)}ms`);
 }
 
 async function main() {
