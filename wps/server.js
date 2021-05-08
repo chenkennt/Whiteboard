@@ -44,6 +44,7 @@ let handler = new WebPubSubEventHandler(hubName, ['*'], {
     switch (message.name) {
       case 'patchShape': {
         let [author, id, data] = message.data;
+        if (!diagram.shapes[id]) break;
         diagram.shapes[id].data = diagram.shapes[id].data.concat(data);
         await serviceClient.sendToAll({
           name: 'shapePatched',
