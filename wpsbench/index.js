@@ -51,7 +51,7 @@ async function testOne(id) {
   lastConnectTime = new Date();
   function draw() {
     if (Math.random() > drawChance) return;
-    if (currentShape && Math.random() > 0.8) currentShape = null;
+    if (currentShape && Math.random() < 0.1) currentShape = null;
     if (!currentShape) {
       currentShape = [generateId(), {
         kind: 'polyline',
