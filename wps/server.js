@@ -15,77 +15,51 @@ const hubName = 'draw';
 let serviceClient = new WebPubSubServiceClient(process.argv[2] || process.env.Web_PubSub_ConnectionString, hubName);
 let handler = new WebPubSubEventHandler(hubName, ['*'], {
   path: '/eventhandler',
+  handleConnect: async (req, res) => {
+    res.success({
+      groups: ['draw']
+    });
+  },
   onConnected: async req => {
     let res = [];
     for (let i in diagram.shapes)
       await serviceClient.sendToConnection(req.context.connectionId, {
-        name: 'shapeUpdated',
+        name: 'addShape',
         data: [null, i, diagram.shapes[i]]
       });
     if (diagram.background)
       await serviceClient.sendToConnection(req.context.connectionId, {
-        name: 'backgroundUpdated',
+        name: 'updateBackground',
         data: diagram.background.id
       });
-    await serviceClient.sendToAll({
-      name: 'userUpdated',
+    await serviceClient.group('draw').sendToAll({
+      name: 'updateUser',
       data: ++diagram.users
     });
   },
   onDisconnected: async req => {
     if (--diagram.users < 0) diagram.users = 0;
-    await serviceClient.sendToAll({
-      name: 'userUpdated',
+    await serviceClient.group('draw').sendToAll({
+      name: 'updateUser',
       data: diagram.users
     });
   },
   handleUserEvent: async (req, res) => {
-    let message = JSON.parse(req.data);
+    let message = req.data;
     switch (message.name) {
-      case 'patchShape': {
-        let [author, id, data] = message.data;
-        if (!diagram.shapes[id]) break;
-        diagram.shapes[id].data = diagram.shapes[id].data.concat(data);
-        await serviceClient.sendToAll({
-          name: 'shapePatched',
-          data: [author, id, data]
-        });
-        break;
-      }
-      case 'updateShape': {
-        let [author, id, shape] = message.data;
+      case 'addShape': {
+        let [id, shape] = message.data;
         diagram.shapes[id] = shape;
-        await serviceClient.sendToAll({
-          name: 'shapeUpdated',
-          data: [author, id, shape]
-        });
         break;
       }
       case 'removeShape': {
-        let [author, id] = message.data;
+        let id = message.data;
         delete diagram.shapes[id];
-        await serviceClient.sendToAll({
-          name: 'shapeRemoved',
-          data: [author, id]
-        });
         break;
       }
       case 'clear': {
-        let author = message.data;
         diagram.shapes = {};
         diagram.background = null;
-        await serviceClient.sendToAll({
-          name: 'clear',
-          data: author
-        });
-        break;
-      }
-      case 'sendMessage': {
-        let [author, name, data] = message.data;
-        await serviceClient.sendToAll({
-          name: "newMessage",
-          data: [author, name, data]
-        });
         break;
       }
     }
@@ -97,7 +71,9 @@ app.use(fileUpload());
 app.use(handler.getMiddleware());
 app
   .get('/negotiate', async (req, res) => {
-    let token = await serviceClient.getAuthenticationToken();
+    let token = await serviceClient.getAuthenticationToken({
+      claims: { role: ['webpubsub.sendToGroup.draw'] }
+    });
     res.json({
       url: token.url
     });
@@ -109,7 +85,7 @@ app
       contentType: req.files['file'].mimetype
     };
     await serviceClient.sendToAll({
-      name: 'backgroundUpdated',
+      name: 'updateBackground',
       data: diagram.background.id
     });
     res.end();
