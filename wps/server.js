@@ -72,7 +72,7 @@ app.use(handler.getMiddleware());
 app
   .get('/negotiate', async (req, res) => {
     let token = await serviceClient.getAuthenticationToken({
-      claims: { role: ['webpubsub.sendToGroup.draw'] }
+      roles: ['webpubsub.sendToGroup.draw']
     });
     res.json({
       url: token.url
