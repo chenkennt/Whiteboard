@@ -162,6 +162,7 @@ async function initialize() {
         case 'addShape': {
           let [a, i, m] = data.data;
           if (author !== a) diagram.updateShape(i, m);
+          break;
         }
         case 'updateBackground': {
           let i = data.data;

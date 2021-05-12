@@ -19,17 +19,39 @@ let totalPoints = 0;
 let clients = 0;
 let lastConnectTime;
 
+function addShape(ws, i, m) {
+  ws.send(JSON.stringify({
+    type: 'event',
+    event: 'message',
+    dataType: 'json',
+    data: {
+      name: 'addShape',
+      data: [i, m]
+    }
+  }));
+}
+
 function updateShape(ws, author, i, m) {
   ws.send(JSON.stringify({
-    name: 'updateShape',
-    data: [author, i, m]
+    type: 'sendToGroup',
+    group: 'draw',
+    dataType: 'json',
+    data: {
+      name: 'updateShape',
+      data: [author, i, m]
+    }
   }));
 }
 
 function patchShape(ws, author, i, d) {
   ws.send(JSON.stringify({
-    name: 'patchShape',
-    data: [author, i, d]
+    type: 'sendToGroup',
+    group: 'draw',
+    dataType: 'json',
+    data: {
+      name: 'patchShape',
+      data: [author, i, d]
+    }
   }));
 }
 
@@ -44,14 +66,17 @@ function randomWalk(p) {
 }
 
 async function testOne(id) {
-  let { url } = await serviceClient.getAuthenticationToken();
-  let ws = new WebSocket(url);
+  let { url } = await serviceClient.getAuthenticationToken({ roles: ['webpubsub.sendToGroup.draw'] });
+  let ws = new WebSocket(url, 'json.webpubsub.azure.v1');
   let currentShape = null;
   const author = generateId();
   lastConnectTime = new Date();
   function draw() {
     if (Math.random() > drawChance) return;
-    if (currentShape && Math.random() < 0.1) currentShape = null;
+    if (currentShape && Math.random() < 0.1) {
+      addShape(ws, currentShape[0], currentShape[1]);
+      currentShape = null;
+    }
     if (!currentShape) {
       currentShape = [generateId(), {
         kind: 'polyline',
@@ -80,9 +105,11 @@ async function testOne(id) {
     setInterval(draw, sendInterval);
   };
   ws.onmessage = e => {
-    let data = JSON.parse(e.data);
-    if (data.name === 'shapeUpdated') allShapesReceived++;
-    if (data.name === 'shapeUpdated' && data.data[0] === author) {
+    let message = JSON.parse(e.data);
+    if (message.type !== 'message') return;
+    let data = message.data;
+    if (data.name === 'updateShape') allShapesReceived++;
+    if (data.name === 'updateShape' && data.data[0] === author) {
       let id = data.data[1];
       if (shapes[id]) {
         shapesReceived++;
@@ -112,8 +139,7 @@ async function main() {
   let ws = new WebSocket(url);
   ws.onopen = () => {
     ws.send(JSON.stringify({
-      name: 'clear',
-      data: generateId()
+      name: 'clear'
     }));
     setInterval(test, 1000);
   }
