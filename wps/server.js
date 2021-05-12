@@ -21,17 +21,6 @@ let handler = new WebPubSubEventHandler(hubName, ['*'], {
     });
   },
   onConnected: async req => {
-    let res = [];
-    for (let i in diagram.shapes)
-      await serviceClient.sendToConnection(req.context.connectionId, {
-        name: 'addShape',
-        data: [null, i, diagram.shapes[i]]
-      });
-    if (diagram.background)
-      await serviceClient.sendToConnection(req.context.connectionId, {
-        name: 'updateBackground',
-        data: diagram.background.id
-      });
     await serviceClient.group('draw').sendToAll({
       name: 'updateUser',
       data: ++diagram.users
@@ -76,6 +65,12 @@ app
     });
     res.json({
       url: token.url
+    });
+  })
+  .get('/diagram', async (req, res) => {
+    res.json({
+      shapes: diagram.shapes,
+      background: diagram.background && diagram.background.id
     });
   })
   .post('/background/upload', async (req, res) => {

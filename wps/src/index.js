@@ -115,9 +115,15 @@ async function initialize() {
     return data.url;
   }, 'json.webpubsub.azure.v1', 5000);
 
-  ws.onopen = () => {
+  ws.onopen = async () => {
     appData.connected = true;
     diagram.removeAll();
+    let res = await fetch('/diagram');
+    let data = await res.json();
+    for (let i in data.shapes)
+      diagram.updateShape(i, data.shapes[i]);
+    if (data.background)
+      diagram.updateBackground('/background/' + data.background);
   };
   ws.onclose = () => appData.connected = false;
   ws.onmessage = event => {
@@ -159,11 +165,6 @@ async function initialize() {
       }
     } else if (message.from === 'server') {
       switch (data.name) {
-        case 'addShape': {
-          let [a, i, m] = data.data;
-          if (author !== a) diagram.updateShape(i, m);
-          break;
-        }
         case 'updateBackground': {
           let i = data.data;
           diagram.updateBackground('/background/' + i);
