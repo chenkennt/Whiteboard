@@ -29,6 +29,7 @@ namespace Microsoft.Azure.SignalR.Samples.Whiteboard
             app.UseFileServer();
             app.UseEndpoints(routes =>
             {
+                routes.MapControllers();
                 routes.MapHub<DrawHub>("/draw");
             });
         }
