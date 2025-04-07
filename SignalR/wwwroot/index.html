@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
-    crossorigin="anonymous">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt"
-    crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
+    integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css"
+    integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
   <title>Whiteboard</title>
   <style>
     .navbar-brand {
@@ -23,7 +23,8 @@
     }
 
     .disconnected {
-      -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+      -webkit-filter: grayscale(100%);
+      /* Safari 6.0 - 9.0 */
       filter: grayscale(100%);
     }
 
@@ -92,7 +93,8 @@
     <header>
       <nav class="navbar navbar-expand-sm navbar-light bg-light fixed-top">
         <a href="#" class="navbar-brand" v-on:click.prevent="showSettings">
-          <img id="logo" src="images/signalr-logo.png" alt="logo" v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
+          <img id="logo" src="images/signalr-logo.png" alt="logo"
+            v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
           <span class="navbar-toggler-icon"></span>
@@ -106,10 +108,12 @@
               <button type="button" class="btn btn-lg btn-light" v-on:click="$('#file-selector').click()">
                 <i class="far fa-image"></i>
               </button>
-              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }" v-on:click="diagram.undo">
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }"
+                v-on:click="diagram.undo">
                 <i class="fas fa-undo"></i>
               </button>
-              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }" v-on:click="diagram.redo">
+              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }"
+                v-on:click="diagram.redo">
                 <i class="fas fa-redo"></i>
               </button>
               <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
@@ -124,7 +128,8 @@
                 {{ tool }}
               </a>
               <div class="dropdown-menu">
-                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }" v-on:click.prevent="tool = t" href="#">
+                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }"
+                  v-on:click.prevent="tool = t" href="#">
                   {{ t }}
                 </a>
               </div>
@@ -134,7 +139,8 @@
                 <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
               </a>
               <div class="dropdown-menu">
-                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }" v-on:click.prevent="color = c" href="#">
+                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }"
+                  v-on:click.prevent="color = c" href="#">
                   <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
                 </a>
               </div>
@@ -146,7 +152,8 @@
                 </svg>
               </a>
               <div class="dropdown-menu">
-                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }" v-on:click.prevent="width = w" href="#">
+                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }"
+                  v-on:click.prevent="width = w" href="#">
                   <svg class="toolbox penbox">
                     <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
                   </svg>
@@ -172,7 +179,8 @@
               <i class="far fa-file-alt"></i>
             </button>
           </div>
-          <input class="form-control" type="text" placeholder="Type here to chat..." v-model="draft" v-on:keypress.enter="sendMessage">
+          <input class="form-control" type="text" placeholder="Type here to chat..." v-model="draft"
+            v-on:keypress.enter="sendMessage">
           <div class="input-group-append">
             <button class="btn btn-outline-success" v-bind:disabled="!draft" v-on:click="sendMessage">
               <i class="fas fa-arrow-right"></i>
@@ -188,7 +196,8 @@
             <h5 class="modal-title" id="exampleModalLabel">Please input your name</h5>
           </div>
           <div class="modal-body">
-            <input id="username" class="form-control" type="text" placeholder="Your name" v-model="name" v-on:keypress.enter="setName">
+            <input id="username" class="form-control" type="text" placeholder="Your name" v-model="name"
+              v-on:keypress.enter="setName">
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">OK</button>
@@ -218,7 +227,8 @@
                   <span class="toolbox selected" v-bind:style="{ 'background-color': messageColor }"></span>
                 </a>
                 <div class="dropdown-menu">
-                  <a v-for="c in colors" v-bind:class="{ active: c === messageColor, 'dropdown-item': true }" v-on:click.prevent="messageColor = c" href="#">
+                  <a v-for="c in colors" v-bind:class="{ active: c === messageColor, 'dropdown-item': true }"
+                    v-on:click.prevent="messageColor = c" href="#">
                     <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
                   </a>
                 </div>
@@ -241,24 +251,26 @@
   <div id="whiteboard"></div>
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
+    integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
     crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
+    integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
     crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://unpkg.com/vue@3"></script> <!-- Updated to Vue 3 -->
   <script src="https://cdn.jsdelivr.net/npm/@aspnet/signalr@1.0.0/dist/browser/signalr.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
   <script>
     function connect(url, connected, disconnected) {
-      var connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
+      let connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
         console.log('Failed to start SignalR connection: ' + error.message);
         setTimeout(() => connectWithRetry(c), 5000);
       });
 
       // create connection
-      var c = new signalR.HubConnectionBuilder().withUrl(url).build();
+      let c = new signalR.HubConnectionBuilder().withUrl(url).build();
 
       // auto reconnect when connection is closed
       c.onclose(() => {
@@ -276,36 +288,36 @@
         done(false);
         return;
       }
-      var dataURLToBlob = dataURL => {
-        var BASE64_MARKER = ';base64,';
+      let dataURLToBlob = dataURL => {
+        let BASE64_MARKER = ';base64,';
         if (dataURL.indexOf(BASE64_MARKER) == -1) {
-          var parts = dataURL.split(',');
-          var contentType = parts[0].split(':')[1];
-          var raw = parts[1];
+          let parts = dataURL.split(',');
+          let contentType = parts[0].split(':')[1];
+          let raw = parts[1];
 
           return new Blob([raw], { type: contentType });
         }
 
-        var parts = dataURL.split(BASE64_MARKER);
-        var contentType = parts[0].split(':')[1];
-        var raw = window.atob(parts[1]);
-        var rawLength = raw.length;
+        let parts = dataURL.split(BASE64_MARKER);
+        let contentType = parts[0].split(':')[1];
+        let raw = window.atob(parts[1]);
+        let rawLength = raw.length;
 
-        var uInt8Array = new Uint8Array(rawLength);
+        let uInt8Array = new Uint8Array(rawLength);
 
-        for (var i = 0; i < rawLength; ++i) {
+        for (let i = 0; i < rawLength; ++i) {
           uInt8Array[i] = raw.charCodeAt(i);
         }
 
         return new Blob([uInt8Array], { type: contentType });
       }
 
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.onload = readerEvent => {
-        var image = new Image();
+        let image = new Image();
         image.onload = function (imageEvent) {
-          var canvas = document.createElement('canvas');
-          var ratio = Math.max(image.width / maxSize, image.height / maxSize);
+          let canvas = document.createElement('canvas');
+          let ratio = Math.max(image.width / maxSize, image.height / maxSize);
           if (ratio < 1) {
             done(false);
             return;
@@ -320,24 +332,24 @@
       reader.readAsDataURL(data);
     }
 
-    var Diagram = function (element, tools) {
-      var id;
-      var shapes = {};
-      var past = [], future = [];
-      var timestamp = 0;
-      var buffer = [];
-      var background;
-      var scale = 1;
-      var offset = [0, 0];
+    let Diagram = function (element, tools) {
+      let id;
+      let shapes = {};
+      let past = [], future = [];
+      let timestamp = 0;
+      let buffer = [];
+      let background;
+      let scale = 1;
+      let offset = [0, 0];
 
-      var shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => { };
+      let shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => { };
 
       function generateId() {
         return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
       }
 
       function tryNotify(c) {
-        var t = new Date().getTime();
+        let t = new Date().getTime();
         if (t - timestamp < 250) return;
         c();
         timestamp = t;
@@ -352,14 +364,14 @@
       }
 
       function translate(x, y) {
-        return [offset[0] + x / scale , offset[1] + y / scale];
+        return [offset[0] + x / scale, offset[1] + y / scale];
       }
 
       function startShape(k, c, w, x, y) {
         if (id) return;
         id = generateId();
         [x, y] = translate(x, y);
-        var m = { kind: k, color: c, width: w, data: tools[k].start(x, y) };
+        let m = { kind: k, color: c, width: w, data: tools[k].start(x, y) };
         shapes[id] = { view: applyStyle(tools[k].draw(element, m.data), c, w), model: m };
         future = [];
         past.push(id);
@@ -370,9 +382,9 @@
       function drawShape(x, y) {
         if (!id) return;
         [x, y] = translate(x, y);
-        var s = shapes[id];
-        var t = tools[s.model.kind];
-        var d = t.move(x, y, s.model.data);
+        let s = shapes[id];
+        let t = tools[s.model.kind];
+        let d = t.move(x, y, s.model.data);
         t.update(s.view, s.model.data);
         if (d) {
           buffer = buffer.concat(d);
@@ -429,24 +441,24 @@
       }
 
       function resizeViewbox(w, h) {
-        var v = element.viewbox();
+        let v = element.viewbox();
         element.viewbox(v.x, v.y, w / scale, h / scale);
       }
 
       function pan(dx, dy) {
-        var v = element.viewbox();
+        let v = element.viewbox();
         offset = [v.x + dx / scale, v.y + dy / scale];
         element.viewbox(offset[0], offset[1], v.width, v.height);
       }
 
       function zoom(r) {
         scale *= r;
-        var v = element.viewbox();
+        let v = element.viewbox();
         element.viewbox(v.x, v.y, v.width / r, v.height / r);
       }
 
       function undo() {
-        var i = past.pop();
+        let i = past.pop();
         if (!i) return;
         future.push(shapes[i].model);
         removeShape(i);
@@ -455,9 +467,9 @@
       }
 
       function redo() {
-        var m = future.pop();
+        let m = future.pop();
         if (!m) return;
-        var i = generateId();
+        let i = generateId();
         updateShape(i, m);
         shapeUpdateCallback(i, m);
         past.push(i);
@@ -487,14 +499,14 @@
       };
     };
 
-    var modes = {
+    let modes = {
       panAndZoom: {
         startOne: p => 0,
         moveOne: (p, pp) => diagram.pan(pp[0] - p[0], pp[1] - p[1]),
         startTwo: (p1, p2) => 0,
         moveTwo: (p1, p2, pp1, pp2) => {
-          var r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
-                  / ((pp2[0] - pp1[0]) * (pp2[0] - pp1[0]) + (pp2[1] - pp1[1]) * (pp2[1] - pp1[1])));
+          let r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
+            / ((pp2[0] - pp1[0]) * (pp2[0] - pp1[0]) + (pp2[1] - pp1[1]) * (pp2[1] - pp1[1])));
           diagram.pan(pp1[0] - p1[0] / r, pp1[1] - p1[1] / r);
           diagram.zoom(r);
         },
@@ -509,7 +521,7 @@
       }
     };
 
-    var tools = {
+    let tools = {
       polyline: {
         start: (x, y) => [x, y],
         move: (x, y, d) => { d.push(x, y); return [x, y]; },
@@ -542,12 +554,12 @@
       }
     };
 
-    var connection = connect('/draw', () => {
+    let connection = connect('/draw', () => {
       appData.connected = true;
       diagram.removeAll();
     }, () => appData.connected = false);
 
-    var diagram = new Diagram(SVG('whiteboard'), tools);
+    let diagram = new Diagram(SVG('whiteboard'), tools);
     diagram.onShapeUpdate((i, m) => connection.send('updateShape', i, m));
     diagram.onShapeRemove(i => connection.send('removeShape', i));
     diagram.onShapePatch((i, d) => connection.send('patchShape', i, d));
@@ -561,7 +573,10 @@
     connection.on('newMessage', (n, m) => appData.messages.push({ name: n, message: m }));
     connection.on('userUpdated', n => appData.totalUsers = n);
 
-    var appData = {
+    const { createApp, reactive } = Vue;
+
+    let appData = {
+      diagram,
       connected: false,
       totalUsers: 1,
       hasUndo: false,
@@ -572,7 +587,7 @@
       tools: Object.keys(tools),
       colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'deepskyblue', 'indigo', 'purple'],
       widths: [1, 2, 4, 8],
-      messages: [],
+      messages: reactive([]),
       messageColor: 'black',
       name: '',
       draft: '',
@@ -580,13 +595,14 @@
       maxImageSize: 1920
     };
 
-    var app = new Vue({
-      el: '#app',
-      data: appData,
+    let app = createApp({
+      data() {
+        return appData;
+      },
       methods: {
         upload: function () {
           resizeImage(event.target.files[0], this.maxImageSize, b => {
-            var formData = new FormData($('#uploadForm')[0]);
+            let formData = new FormData($('#uploadForm')[0]);
             if (b) {
               formData.delete('file');
               formData.append('file', b);
@@ -616,17 +632,19 @@
       }
     });
 
+    app.mount('#app');
+
     // UI initialization
     (function () {
       // hook mouse and touch events for whiteboard
-      var mode;
-      var prev;
-      var started;
-      var start = p => {
+      let mode;
+      let prev;
+      let started;
+      let start = p => {
         if (!mode) return;
         prev = p;
       };
-      var move = p => {
+      let move = p => {
         if (!mode) return;
         if (prev.length !== p.length) return;
         // do not start if the move is too small
@@ -640,14 +658,14 @@
         else if (p.length === 2) modes[mode].moveTwo(p[0], p[1], prev[0], prev[1]);
         prev = p;
       };
-      var end = p => {
+      let end = p => {
         if (!mode) return;
         if (started) modes[mode].end();
         prev = started = null;
       };
-      var map = (ts, f) => {
-        var ps = [];
-        for (var i = 0; i < ts.length; i++) ps.push(f(ts[i]));
+      let map = (ts, f) => {
+        let ps = [];
+        for (let i = 0; i < ts.length; i++) ps.push(f(ts[i]));
         return ps;
       };
       $('#whiteboard')
@@ -687,12 +705,12 @@
       });
 
       // update zoom level for small devices
-      var w = window.innerWidth;
+      let w = window.innerWidth;
       diagram.zoom(w < 576 ? 1 / 3 :
-                   w < 768 ? 1 / 2 :
-                   w < 992 ? 2 / 3 :
-                   w < 1200 ? 5 / 6 :
-                   1);
+        w < 768 ? 1 / 2 :
+          w < 992 ? 2 / 3 :
+            w < 1200 ? 5 / 6 :
+              1);
 
       // hook window resize event to set correct viewbox size
       window.onresize = () => diagram.resizeViewbox($('#whiteboard').width(), $('#whiteboard').height());
