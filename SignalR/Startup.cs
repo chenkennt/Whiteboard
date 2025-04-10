@@ -5,32 +5,31 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Azure.SignalR.Samples.Whiteboard
+namespace Microsoft.Azure.SignalR.Samples.Whiteboard;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        Configuration = configuration;
+    }
 
-        public IConfiguration Configuration { get; }
+    public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddSingleton<Diagram>();
-            services.AddMvc();
-            services.AddSignalR().AddAzureSignalR();
-        }
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<Diagram>();
+        services.AddMvc();
+        services.AddSignalR();//.AddAzureSignalR();
+    }
 
-        public void Configure(IApplicationBuilder app)
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseRouting();
+        app.UseFileServer();
+        app.UseEndpoints(routes =>
         {
-            app.UseRouting();
-            app.UseFileServer();
-            app.UseEndpoints(routes =>
-            {
-                routes.MapHub<DrawHub>("/draw");
-            });
-        }
+            routes.MapHub<DrawHub>("/draw");
+        });
     }
 }

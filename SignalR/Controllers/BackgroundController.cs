@@ -8,41 +8,40 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.SignalR.Samples.Whiteboard
+namespace Microsoft.Azure.SignalR.Samples.Whiteboard;
+
+[Route("/background")]
+public class BackgroundController : Controller
 {
-    [Route("/background")]
-    public class BackgroundController : Controller
+    private IHubContext<DrawHub> hubContext;
+    private Diagram diagram;
+
+    public BackgroundController(IHubContext<DrawHub> context, Diagram diagram)
     {
-        private IHubContext<DrawHub> hubContext;
-        private Diagram diagram;
+        hubContext = context;
+        this.diagram = diagram;
+    }
 
-        public BackgroundController(IHubContext<DrawHub> context, Diagram diagram)
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(IFormFile file)
+    {
+        diagram.BackgroundId = Guid.NewGuid().ToString().Substring(0, 8);
+        diagram.Background = new byte[file.Length];
+        diagram.BackgroundContentType = file.ContentType;
+        using (var stream = new MemoryStream(diagram.Background))
         {
-            hubContext = context;
-            this.diagram = diagram;
+            await file.CopyToAsync(stream);
         }
 
-        [HttpPost("upload")]
-        public async Task<IActionResult> Upload(IFormFile file)
-        {
-            diagram.BackgroundId = Guid.NewGuid().ToString().Substring(0, 8);
-            diagram.Background = new byte[file.Length];
-            diagram.BackgroundContentType = file.ContentType;
-            using (var stream = new MemoryStream(diagram.Background))
-            {
-                await file.CopyToAsync(stream);
-            }
+        await hubContext.Clients.All.SendAsync("BackgroundUpdated", diagram.BackgroundId);
 
-            await hubContext.Clients.All.SendAsync("BackgroundUpdated", diagram.BackgroundId);
+        return Ok();
+    }
 
-            return Ok();
-        }
-
-        [HttpGet("{id}")]
-        public IActionResult Download(string id)
-        {
-            if (diagram.BackgroundId != id) return NotFound();
-            return File(diagram.Background, diagram.BackgroundContentType);
-        }
+    [HttpGet("{id}")]
+    public IActionResult Download(string id)
+    {
+        if (diagram.BackgroundId != id) return NotFound();
+        return File(diagram.Background, diagram.BackgroundContentType);
     }
 }
