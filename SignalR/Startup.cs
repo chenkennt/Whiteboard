@@ -20,7 +20,7 @@ public class Startup
     {
         services.AddSingleton<Diagram>();
         services.AddMvc();
-        services.AddSignalR();//.AddAzureSignalR();
+        services.AddSignalR().AddAzureSignalR();
     }
 
     public void Configure(IApplicationBuilder app)
@@ -29,6 +29,7 @@ public class Startup
         app.UseFileServer();
         app.UseEndpoints(routes =>
         {
+            routes.MapControllers();
             routes.MapHub<DrawHub>("/draw");
         });
     }

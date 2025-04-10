@@ -7,164 +7,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
-    integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css"
     integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
   <title>Whiteboard</title>
-  <style>
-    .navbar-brand {
-      padding: 0;
-      margin: 0 10px 0 0;
-    }
-
-    .nav-logo-img {
-      width: 50px;
-    }
-
-    .disconnected {
-      -webkit-filter: grayscale(100%);
-      /* Safari 6.0 - 9.0 */
-      filter: grayscale(100%);
-    }
-
-    html {
-      height: 100%;
-    }
-
-    body {
-      height: calc(100% - 120px);
-    }
-
-    #whiteboard {
-      width: 100%;
-      height: 100%;
-      min-height: 100%;
-      display: block;
-      margin-top: 66px;
-    }
-
-    svg {
-      display: block;
-    }
-
-    .toolbox {
-      width: 7rem;
-      height: 1.5rem;
-      display: inline-block;
-      vertical-align: middle;
-      border-radius: 0.3rem;
-      border: 1px solid black;
-    }
-
-    .selected {
-      width: 4rem;
-      border: 1px solid white;
-    }
-
-    .penbox {
-      background-color: white;
-    }
-
-    .message-log {
-      margin-bottom: 50px;
-      pointer-events: none;
-      font-weight: bold;
-      text-shadow: 1px 1px 2px white;
-    }
-
-    .top-btn-group {
-      margin-right: 10px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .popover-body {
-      width: 240px;
-      height: 240px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <div id="app">
     <header>
       <nav class="navbar navbar-expand-sm navbar-light bg-light fixed-top">
-        <a href="#" class="navbar-brand" v-on:click.prevent="showSettings">
-          <img id="logo" src="images/signalr-logo.png" alt="logo"
-            v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-              <button type="button" class="btn btn-lg btn-light" v-on:click="diagram.clear">
-                <i class="far fa-file"></i>
-              </button>
-              <button type="button" class="btn btn-lg btn-light" v-on:click="$('#file-selector').click()">
-                <i class="far fa-image"></i>
-              </button>
-              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasUndo }"
-                v-on:click="diagram.undo">
-                <i class="fas fa-undo"></i>
-              </button>
-              <button type="button" v-bind:class="{ btn: true, 'btn-lg': true, 'btn-light': true, disabled: !hasRedo }"
-                v-on:click="diagram.redo">
-                <i class="fas fa-redo"></i>
-              </button>
-              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
-                <i class="fas fa-search-plus"></i>
-              </button>
-              <button type="button" class="btn btn-lg btn-light" v-on:click="zoomOut">
-                <i class="fas fa-search-minus"></i>
-              </button>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                {{ tool }}
-              </a>
-              <div class="dropdown-menu">
-                <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }"
-                  v-on:click.prevent="tool = t" href="#">
-                  {{ t }}
+        <div class="container-fluid">
+          <a href="#" class="navbar-brand" v-on:click.prevent="showSettings">
+            <img id="logo" src="images/signalr-logo.png" alt="logo"
+              v-bind:class="{ 'nav-logo-img': true, disconnected: !connected }">
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <button type="button" class="btn btn-lg btn-light" v-on:click="diagram.clear">
+                  <i class="far fa-file"></i>
+                </button>
+                <button type="button" class="btn btn-lg btn-light"
+                  onclick="document.querySelector('#file-selector').click()">
+                  <i class="far fa-image"></i>
+                </button>
+                <button type="button" v-bind:disabled="!hasUndo" class="btn btn-lg btn-light" v-on:click="diagram.undo">
+                  <i class="fas fa-undo"></i>
+                </button>
+                <button type="button" v-bind:disabled="!hasRedo" class="btn btn-lg btn-light" v-on:click="diagram.redo">
+                  <i class="fas fa-redo"></i>
+                </button>
+                <button type="button" class="btn btn-lg btn-light" v-on:click="zoomIn">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button type="button" class="btn btn-lg btn-light" v-on:click="zoomOut">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  {{ tool }}
                 </a>
-              </div>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
-              </a>
-              <div class="dropdown-menu">
-                <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }"
-                  v-on:click.prevent="color = c" href="#">
-                  <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                <div class="dropdown-menu">
+                  <a v-for="t in tools" v-bind:class="{ active: t === tool, 'dropdown-item': true }"
+                    v-on:click.prevent="tool = t" href="#">
+                    {{ t }}
+                  </a>
+                </div>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  <span class="toolbox selected" v-bind:style="{ 'background-color': color }"></span>
                 </a>
-              </div>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
-                <svg class="toolbox selected penbox">
-                  <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
-                </svg>
-              </a>
-              <div class="dropdown-menu">
-                <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }"
-                  v-on:click.prevent="width = w" href="#">
-                  <svg class="toolbox penbox">
-                    <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                <div class="dropdown-menu">
+                  <a v-for="c in colors" v-bind:class="{ active: c === color, 'dropdown-item': true }"
+                    v-on:click.prevent="color = c" href="#">
+                    <span class="toolbox" v-bind:style="{ 'background-color': c }"></span>
+                  </a>
+                </div>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  <svg class="toolbox selected penbox">
+                    <line x1="0" y1="11" x2="61" y2="11" v-bind:stroke="color" v-bind:stroke-width="width" />
                   </svg>
                 </a>
-              </div>
-            </li>
-          </ul>
-          {{ totalUsers }} Online
-          <form id="uploadForm" method="post" enctype="multipart/form-data">
-            <input id="file-selector" v-on:change="upload" type="file" name="file" hidden>
-          </form>
+                <div class="dropdown-menu">
+                  <a v-for="w in widths" v-bind:class="{ active: w === width, 'dropdown-item': true }"
+                    v-on:click.prevent="width = w" href="#">
+                    <svg class="toolbox penbox">
+                      <line x1="0" y1="11" x2="111" y2="11" v-bind:stroke="color" v-bind:stroke-width="w" />
+                    </svg>
+                  </a>
+                </div>
+              </li>
+            </ul>
+            {{ totalUsers }} Online
+            <form id="uploadForm" method="post" enctype="multipart/form-data">
+              <input id="file-selector" v-on:change="upload" type="file" name="file" hidden>
+            </form>
+          </div>
         </div>
       </nav>
     </header>
@@ -173,18 +106,20 @@
     </div>
     <footer>
       <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-bottom">
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <button class="btn btn-outline-info" data-toggle="collapse" data-target="#message-log">
-              <i class="far fa-file-alt"></i>
-            </button>
-          </div>
-          <input class="form-control" type="text" placeholder="Type here to chat..." v-model="draft"
-            v-on:keypress.enter="sendMessage">
-          <div class="input-group-append">
-            <button class="btn btn-outline-success" v-bind:disabled="!draft" v-on:click="sendMessage">
-              <i class="fas fa-arrow-right"></i>
-            </button>
+        <div class="container-fluid">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <button class="btn btn-outline-info" data-bs-toggle="collapse" data-bs-target="#message-log">
+                <i class="far fa-file-alt"></i>
+              </button>
+            </div>
+            <input class="form-control" type="text" placeholder="Type here to chat..." v-model="draft"
+              v-on:keypress.enter="sendMessage">
+            <div class="input-group-append">
+              <button class="btn btn-outline-success" v-bind:disabled="!draft" v-on:click="sendMessage">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -200,7 +135,7 @@
               v-on:keypress.enter="setName">
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">OK</button>
+            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-bs-dismiss="modal">OK</button>
           </div>
         </div>
       </div>
@@ -223,7 +158,8 @@
                 <b>Message color</b>
               </div>
               <div class="dropdown">
-                <a class="dropdown-toggle" href="#" id="dropdownMenuButton" role="button" data-toggle="dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
                   <span class="toolbox selected" v-bind:style="{ 'background-color': messageColor }"></span>
                 </a>
                 <div class="dropdown-menu">
@@ -242,535 +178,20 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-dismiss="modal">Save</button>
+            <button type="button" class="btn btn-primary" v-bind:disabled="!name" data-bs-dismiss="modal">Save</button>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div id="whiteboard"></div>
-  <!-- Optional JavaScript -->
-  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
-    integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
     crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
-    integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
-    crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/vue@3"></script> <!-- Updated to Vue 3 -->
-  <script src="https://cdn.jsdelivr.net/npm/@aspnet/signalr@1.0.0/dist/browser/signalr.min.js"></script>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.5/svg.min.js"></script>
-  <script>
-    function connect(url, connected, disconnected) {
-      let connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
-        console.log('Failed to start SignalR connection: ' + error.message);
-        setTimeout(() => connectWithRetry(c), 5000);
-      });
-
-      // create connection
-      let c = new signalR.HubConnectionBuilder().withUrl(url).build();
-
-      // auto reconnect when connection is closed
-      c.onclose(() => {
-        disconnected(c);
-        console.log('Disconnected, try to reconnect.');
-        connectWithRetry(c);
-      });
-
-      connectWithRetry(c);
-      return c;
-    }
-
-    function resizeImage(data, maxSize, done) {
-      if (!maxSize) {
-        done(false);
-        return;
-      }
-      let dataURLToBlob = dataURL => {
-        let BASE64_MARKER = ';base64,';
-        if (dataURL.indexOf(BASE64_MARKER) == -1) {
-          let parts = dataURL.split(',');
-          let contentType = parts[0].split(':')[1];
-          let raw = parts[1];
-
-          return new Blob([raw], { type: contentType });
-        }
-
-        let parts = dataURL.split(BASE64_MARKER);
-        let contentType = parts[0].split(':')[1];
-        let raw = window.atob(parts[1]);
-        let rawLength = raw.length;
-
-        let uInt8Array = new Uint8Array(rawLength);
-
-        for (let i = 0; i < rawLength; ++i) {
-          uInt8Array[i] = raw.charCodeAt(i);
-        }
-
-        return new Blob([uInt8Array], { type: contentType });
-      }
-
-      let reader = new FileReader();
-      reader.onload = readerEvent => {
-        let image = new Image();
-        image.onload = function (imageEvent) {
-          let canvas = document.createElement('canvas');
-          let ratio = Math.max(image.width / maxSize, image.height / maxSize);
-          if (ratio < 1) {
-            done(false);
-            return;
-          }
-          canvas.width = image.width / ratio;
-          canvas.height = image.height / ratio;
-          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-          done(dataURLToBlob(canvas.toDataURL('image/jpeg')));
-        }
-        image.src = readerEvent.target.result;
-      }
-      reader.readAsDataURL(data);
-    }
-
-    let Diagram = function (element, tools) {
-      let id;
-      let shapes = {};
-      let past = [], future = [];
-      let timestamp = 0;
-      let buffer = [];
-      let background;
-      let scale = 1;
-      let offset = [0, 0];
-
-      let shapeUpdateCallback = shapePatchCallback = shapeRemoveCallback = clearCallback = historyChangeCallback = () => { };
-
-      function generateId() {
-        return Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
-      }
-
-      function tryNotify(c) {
-        let t = new Date().getTime();
-        if (t - timestamp < 250) return;
-        c();
-        timestamp = t;
-      }
-
-      function historyChange() {
-        historyChangeCallback(past.length > 0, future.length > 0);
-      }
-
-      function applyStyle(e, c, w) {
-        return e.fill('none').stroke({ color: c, width: w, linecap: 'round' });
-      }
-
-      function translate(x, y) {
-        return [offset[0] + x / scale, offset[1] + y / scale];
-      }
-
-      function serialize(m) {
-        let t = tools[m.kind];
-        return {
-          color: m.color,
-          width: m.width,
-          ...t.serialize(m.data)
-        };
-      }
-
-      function startShape(k, c, w, x, y) {
-        if (id) return;
-        id = generateId();
-        [x, y] = translate(x, y);
-        let m = { kind: k, color: c, width: w, data: tools[k].start(x, y) };
-        shapes[id] = { view: applyStyle(tools[k].draw(element, m.data), c, w), model: m };
-        future = [];
-        past.push(id);
-        historyChange();
-        shapeUpdateCallback(id, k, serialize(m));
-      }
-
-      function drawShape(x, y) {
-        if (!id) return;
-        [x, y] = translate(x, y);
-        let s = shapes[id];
-        let t = tools[s.model.kind];
-        let d = t.move(x, y, s.model.data);
-        t.update(s.view, s.model.data);
-        if (d) {
-          buffer = buffer.concat(d);
-          tryNotify(() => {
-            shapePatchCallback(id, s.model.kind, t.serialize(buffer));
-            buffer = [];
-          });
-        } else tryNotify(() => shapeUpdateCallback(id, s.model.kind, serialize(s.model)));
-      }
-
-      function endShape() {
-        if (!id) return;
-        let s = shapes[id];
-        let t = tools[s.model.kind];
-        if (buffer.length > 0) {
-          shapePatchCallback(id, s.model.kind, t.serialize(buffer));
-          buffer = [];
-        } else shapeUpdateCallback(id, shapes[id].model.kind, serialize(shapes[id].model));
-        id = null;
-      }
-
-      function updateShapeInternal(i, m) {
-        if (shapes[i]) {
-          shapes[i].model = m;
-          tools[m.kind].update(shapes[i].view, m.data);
-          applyStyle(shapes[i].view, m.color, m.width);
-        } else shapes[i] = { view: applyStyle(tools[m.kind].draw(element, m.data), m.color, m.width), model: m };
-      }
-
-      function updateShape(i, k, d) {
-        let t = tools[k];
-        let m = { color: d.color, width: d.width, kind: k, data: t.deserialize(d) };
-        updateShapeInternal(i, m);
-      }
-
-      function patchShape(i, d) {
-        if (shapes[i]) {
-          let m = shapes[i].model;
-          let t = tools[m.kind];
-          if (d.color) m.color = d.color;
-          if (d.width) m.width = d.width;
-          m.data = m.data.concat(t.deserialize(d));
-          t.update(shapes[i].view, m.data);
-          applyStyle(shapes[i].view, m.color, m.width);
-        }
-      }
-
-      function removeShape(i) {
-        if (!shapes[i]) return;
-        shapes[i].view.remove();
-        delete shapes[i];
-      }
-
-      function clear() {
-        removeAll();
-        clearCallback();
-      }
-
-      function removeAll() {
-        id = null;
-        shapes = {};
-        past = [], future = [];
-        timestamp = 0;
-        buffer = [];
-        background = null;
-        element.clear();
-        historyChange();
-      }
-
-      function updateBackground(file) {
-        if (background) background.remove();
-        background = element.image(file).back();
-      }
-
-      function resizeViewbox(w, h) {
-        let v = element.viewbox();
-        element.viewbox(v.x, v.y, w / scale, h / scale);
-      }
-
-      function pan(dx, dy) {
-        let v = element.viewbox();
-        offset = [v.x + dx / scale, v.y + dy / scale];
-        element.viewbox(offset[0], offset[1], v.width, v.height);
-      }
-
-      function zoom(r) {
-        scale *= r;
-        let v = element.viewbox();
-        element.viewbox(v.x, v.y, v.width / r, v.height / r);
-      }
-
-      function undo() {
-        let i = past.pop();
-        if (!i) return;
-        future.push(shapes[i].model);
-        removeShape(i);
-        shapeRemoveCallback(i);
-        historyChange();
-      }
-
-      function redo() {
-        let m = future.pop();
-        if (!m) return;
-        let i = generateId();
-        updateShapeInternal(i, m);
-        shapeUpdateCallback(i, m.kind, serialize(m));
-        past.push(i);
-        historyChange();
-      }
-
-      return {
-        startShape: startShape,
-        drawShape: drawShape,
-        endShape: endShape,
-        updateShape: updateShape,
-        patchShape: patchShape,
-        removeShape: removeShape,
-        clear: clear,
-        removeAll: removeAll,
-        updateBackground: updateBackground,
-        resizeViewbox: resizeViewbox,
-        pan: pan,
-        zoom: zoom,
-        undo: undo,
-        redo: redo,
-        onShapeUpdate: c => shapeUpdateCallback = c,
-        onShapeRemove: c => shapeRemoveCallback = c,
-        onShapePatch: c => shapePatchCallback = c,
-        onClear: c => clearCallback = c,
-        onHistoryChange: c => historyChangeCallback = c
-      };
-    };
-
-    let modes = {
-      panAndZoom: {
-        startOne: p => 0,
-        moveOne: (p, pp) => diagram.pan(pp[0] - p[0], pp[1] - p[1]),
-        startTwo: (p1, p2) => 0,
-        moveTwo: (p1, p2, pp1, pp2) => {
-          let r = Math.sqrt(((p2[0] - p1[0]) * (p2[0] - p1[0]) + (p2[1] - p1[1]) * (p2[1] - p1[1]))
-            / ((pp2[0] - pp1[0]) * (pp2[0] - pp1[0]) + (pp2[1] - pp1[1]) * (pp2[1] - pp1[1])));
-          diagram.pan(pp1[0] - p1[0] / r, pp1[1] - p1[1] / r);
-          diagram.zoom(r);
-        },
-        end: () => 0
-      },
-      draw: {
-        startOne: p => { if (appData.connected) diagram.startShape(appData.tool, appData.color, appData.width, p[0], p[1]); },
-        moveOne: (p, pp) => { if (appData.connected) diagram.drawShape(p[0], p[1]); },
-        startTwo: () => 0,
-        moveTwo: () => 0,
-        end: () => { if (appData.connected) diagram.endShape(); }
-      }
-    };
-
-    let tools = {
-      'Polyline': {
-        start: (x, y) => [x, y],
-        move: (x, y, d) => { d.push(x, y); return [x, y]; },
-        draw: (b, d) => b.polyline(d),
-        update: (e, d) => e.plot(d),
-        serialize: d => ({
-          points: d.reduce((a, c, i) => {
-            if (i % 2 === 0) a.push({ x: c, y: d[i + 1] });
-            return a;
-          }, [])
-        }),
-        deserialize: d => d.points.reduce((a, c) => a.concat(c.x, c.y), [])
-      },
-      'Line': {
-        start: (x, y) => [x, y, x, y],
-        move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, d) => b.line(d),
-        update: (e, d) => e.plot(d),
-        serialize: d => ({
-          start: { x: d[0], y: d[1] },
-          end: { x: d[2], y: d[3] }
-        }),
-        deserialize: d => [d.start.x, d.start.y, d.end.x, d.end.y]
-      },
-      'Rect': {
-        start: (x, y) => [x, y, x, y],
-        move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, d) => b.rect(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).move(Math.min(d[0], d[2]), Math.min(d[1], d[3])),
-        update: (e, d) => e.x(Math.min(d[2], d[0])).y(Math.min(d[1], d[3])).size(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])),
-        serialize: d => ({
-          topLeft: { x: d[0], y: d[1] },
-          bottomRight: { x: d[2], y: d[3] }
-        }),
-        deserialize: d => [d.topLeft.x, d.topLeft.y, d.bottomRight.x, d.bottomRight.y]
-      },
-      'Circle': {
-        start: (x, y) => [x, y, 0],
-        move: (x, y, d) => { d[2] = Math.floor(Math.sqrt((d[0] - x) * (d[0] - x) + (d[1] - y) * (d[1] - y))) },
-        draw: (b, d) => b.circle(d[2] * 2).cx(d[0]).cy(d[1]),
-        update: (e, d) => e.cx(d[0]).cy(d[1]).radius(d[2]),
-        serialize: d => ({
-          center: { x: d[0], y: d[1] },
-          radius: d[2]
-        }),
-        deserialize: d => [d.center.x, d.center.y, d.radius]
-      },
-      'Ellipse': {
-        start: (x, y) => [x, y, x, y],
-        move: (x, y, d) => { d[2] = x; d[3] = y; },
-        draw: (b, d) => b.ellipse(Math.abs(d[2] - d[0]), Math.abs(d[3] - d[1])).cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2),
-        update: (e, d) => e.cx((d[0] + d[2]) / 2).cy((d[1] + d[3]) / 2).radius(Math.abs(d[2] - d[0]) / 2, Math.abs(d[3] - d[1]) / 2),
-        serialize: d => ({
-          topLeft: { x: d[0], y: d[1] },
-          bottomRight: { x: d[2], y: d[3] }
-        }),
-        deserialize: d => [d.topLeft.x, d.topLeft.y, d.bottomRight.x, d.bottomRight.y]
-      }
-    };
-
-    let connection = connect('/draw', () => {
-      appData.connected = true;
-      diagram.removeAll();
-    }, () => appData.connected = false);
-
-    let diagram = new Diagram(SVG('whiteboard'), tools);
-    diagram.onShapeUpdate((i, k, m) => connection.send(`addOrUpdate${k}`, i, m));
-    diagram.onShapePatch((i, k, m) => connection.send(`patch${k}`, i, m));
-    diagram.onShapeRemove(i => connection.send('removeShape', i));
-    diagram.onClear(() => connection.send('clear'));
-    diagram.onHistoryChange((p, f) => [appData.hasUndo, appData.hasRedo] = [p, f]);
-    connection.on('clear', diagram.removeAll);
-    connection.on('shapeUpdated', diagram.updateShape);
-    connection.on('shapePatched', diagram.patchShape);
-    connection.on('shapeRemoved', diagram.removeShape);
-    connection.on('backgroundUpdated', i => diagram.updateBackground('/background/' + i));
-    connection.on('newMessage', (n, m) => appData.messages.push({ name: n, message: m }));
-    connection.on('userUpdated', n => appData.totalUsers = n);
-
-    const { createApp, reactive } = Vue;
-
-    let appData = {
-      diagram,
-      connected: false,
-      totalUsers: 1,
-      hasUndo: false,
-      hasRedo: false,
-      tool: 'Polyline',
-      color: 'black',
-      width: 1,
-      tools: Object.keys(tools),
-      colors: ['black', 'grey', 'darkred', 'red', 'orange', 'yellow', 'green', 'deepskyblue', 'indigo', 'purple'],
-      widths: [1, 2, 4, 8],
-      messages: reactive([]),
-      messageColor: 'black',
-      name: '',
-      draft: '',
-      showLog: true,
-      maxImageSize: 1920
-    };
-
-    let app = createApp({
-      data() {
-        return appData;
-      },
-      methods: {
-        upload: function () {
-          resizeImage(event.target.files[0], this.maxImageSize, b => {
-            let formData = new FormData($('#uploadForm')[0]);
-            if (b) {
-              formData.delete('file');
-              formData.append('file', b);
-            }
-            $.ajax({
-              type: 'POST',
-              url: '/background/upload',
-              processData: false,
-              contentType: false,
-              cache: false,
-              data: formData,
-              success: () => $('#uploadForm')[0].reset()
-            });
-          });
-        },
-        zoomIn: () => diagram.zoom(1.25),
-        zoomOut: () => diagram.zoom(0.8),
-        sendMessage: function () {
-          if (!this.draft) return;
-          this.messages.push({ name: this.name, message: this.draft });
-          connection.send('sendMessage', this.name, this.draft);
-          this.draft = '';
-        },
-        setName: function () { if (this.name) $('#inputName').modal('toggle'); },
-        toggleLog: function () { this.showLog = !this.showLog; },
-        showSettings: () => $("#settings").modal({ backdrop: 'static', keyboard: false })
-      }
-    });
-
-    app.mount('#app');
-
-    // UI initialization
-    (function () {
-      // hook mouse and touch events for whiteboard
-      let mode;
-      let prev;
-      let started;
-      let start = p => {
-        if (!mode) return;
-        prev = p;
-      };
-      let move = p => {
-        if (!mode) return;
-        if (prev.length !== p.length) return;
-        // do not start if the move is too small
-        if (!started && p.length === 1 && Math.abs(p[0][0] - prev[0][0]) < 5 && Math.abs(p[0][1] - prev[0][1]) < 5) return;
-        else {
-          started = true;
-          if (p.length === 1) modes[mode].startOne(prev[0]);
-          else if (p.length === 2) modes[mode].startTwo(prev[0], prev[1]);
-        }
-        if (p.length === 1) modes[mode].moveOne(p[0], prev[0]);
-        else if (p.length === 2) modes[mode].moveTwo(p[0], p[1], prev[0], prev[1]);
-        prev = p;
-      };
-      let end = p => {
-        if (!mode) return;
-        if (started) modes[mode].end();
-        prev = started = null;
-      };
-      let map = (ts, f) => {
-        let ps = [];
-        for (let i = 0; i < ts.length; i++) ps.push(f(ts[i]));
-        return ps;
-      };
-      $('#whiteboard')
-        .on('mousedown', e => {
-          mode = e.ctrlKey ? 'panAndZoom' : 'draw';
-          start([[e.offsetX, e.offsetY]]);
-        }).on('mousemove', e => {
-          move([[e.offsetX, e.offsetY]]);
-        }).on('mouseup', e => {
-          end();
-          mode = null;
-        }).on('touchstart', e => {
-          if (e.touches.length > 2) return;
-          if (prev) end();
-          mode = e.touches.length === 1 ? 'draw' : 'panAndZoom';
-          start(map(e.touches, t => [t.pageX, t.pageY - 66]));
-          e.preventDefault();
-        }).on('touchmove', e => {
-          move(map(e.touches, t => [t.pageX, t.pageY - 66]));
-          e.preventDefault();
-        }).on('touchend', e => {
-          end();
-          mode = null;
-          e.preventDefault();
-        }).on('touchcancel', e => {
-          end();
-          mode = null;
-          e.preventDefault();
-        });
-
-      // disable keyboard events for username dialog
-      $("#inputName").on('shown.bs.modal', () => {
-        $('#username').focus();
-      }).modal({
-        backdrop: 'static',
-        keyboard: false
-      });
-
-      // update zoom level for small devices
-      let w = window.innerWidth;
-      diagram.zoom(w < 576 ? 1 / 3 :
-        w < 768 ? 1 / 2 :
-          w < 992 ? 2 / 3 :
-            w < 1200 ? 5 / 6 :
-              1);
-
-      // hook window resize event to set correct viewbox size
-      window.onresize = () => diagram.resizeViewbox($('#whiteboard').width(), $('#whiteboard').height());
-    })();
-  </script>
+  <script src="script.js"></script>
 </body>
 
 </html>
