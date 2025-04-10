@@ -2,7 +2,7 @@
 
 This is a sample project to demonstrate how to build a web application for real time collaboration using Azure, ASP.NET Core and other related technologies. This sample application includes the following features:
 
-* A whiteboard that anyone can paint on it and others can see you painting in real time
+* A whiteboard that anyone can paint on it and others can see you paint in real time
 * Painting features:
   1. Basic paint tools (freehand, line, rectangle, circle, ellipse), color and stroke thickness
   2. Upload a background image
@@ -84,7 +84,7 @@ To deploy the application to Azure Web App, first package it into a zip file:
   dotnet build
   dotnet publish -c Release
   ```
-  Then package all files under `bin/Release/netcoreapp3.1/publish` to a zip file.
+  Then package all files under `bin/Release/net9.0/publish` to a zip file.
 * For WebSocket version, just run `npm install` and then package all files into a zip file.
 
 Then use the following command to deploy it to Azure Web App:
@@ -102,3 +102,34 @@ az webapp config appsettings set --resource-group <resource_group_name> --name <
 Also update corresponding upstream urls if you're using WebSocket version.
 
 Now your whiteboard is running in Azure at `https://<app_name>.azurewebsites.net`. Enjoy!
+
+## Interact with Large Language Model
+
+[Model Context Protocol](https://github.com/modelcontextprotocol) (MCP) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. With MCP we can expose the painting capability of whiteboard to LLM so it can draw the picture for you!
+
+[SignalRMCP](SignalRMCP/) is a MCP server implementation that exposes hub methods from the whiteboard SignalR hub so LLM can directly operate on the whiteboard.
+
+To install the MCP server:
+
+1. Install dependencies
+
+   ```
+   npm install
+   ```
+
+2. The MCP server will by default connect to local server (http://localhost:5000). If your whiteboard is not running locally, set the endpoint in WHITEBOARD_ENDPOINT environment variable or `.env` file
+
+3. Configure the MCP server in your LLM app (like Claude Desktop or GitHub Copilot in VS Code):
+
+   ```json
+   "mcpServers": {
+     "Whiteboard": {
+       "command": "node",
+         "args": [
+           "<path-to-SignalRMCP-project>/index.js"
+         ]
+      }
+    }
+   ```
+
+4. Now open your favorite LLM app and ask it to paint something on whiteboard, you'll see it paint in real time.
