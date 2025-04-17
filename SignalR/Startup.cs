@@ -7,14 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Azure.SignalR.Samples.Whiteboard;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    public Startup(IConfiguration configuration)
-    {
-        Configuration = configuration;
-    }
-
-    public IConfiguration Configuration { get; }
+    public IConfiguration Configuration { get; } = configuration;
 
     public void ConfigureServices(IServiceCollection services)
     {

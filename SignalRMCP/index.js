@@ -6,19 +6,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const logger = new class {
+  log = (level, message) => level > 1 && console.error(`[${level}] ${message}`);
+};
+
+const connection = new HubConnectionBuilder().withUrl(`${process.env['WHITEBOARD_ENDPOINT'] || 'http://localhost:5000'}/draw`).withAutomaticReconnect().configureLogging(logger).build();
+
 const server = new McpServer({
   name: 'Whiteboard',
   version: '1.0.0'
 });
-
-class McpLogger {
-  log(logLevel, message) {
-    console.error(`[${logLevel}] ${message}`);
-  }
-}
-
-const connection = new HubConnectionBuilder().withUrl(`${process.env['WHITEBOARD_ENDPOINT'] || 'http://localhost:5000'}/draw`).configureLogging(new McpLogger()).build();
-await connection.start();
 
 let color = z.string().describe('color of the shape, valid values are: black, grey, darkred, red, orange, yellow, green, deepskyblue, indigo, purple');
 let width = z.number().describe('width of the shape, valid values are: 1, 2, 4, 8');
@@ -121,3 +118,14 @@ server.tool(
 const transport = new StdioServerTransport();
 
 await server.connect(transport);
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+for (;;) {
+  try {
+    await connection.start();
+    break;
+  } catch (e) {
+    console.error('Failed to start SignalR connection: ' + e.message);
+    await sleep(5000);
+  }
+}

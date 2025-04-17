@@ -4,7 +4,7 @@ This is a sample project to demonstrate how to build a web application for real 
 
 * A whiteboard that anyone can paint on it and others can see you paint in real time
 * Painting features:
-  1. Basic paint tools (freehand, line, rectangle, circle, ellipse), color and stroke thickness
+  1. Basic paint tools (freehand, line, rectangle, circle, ellipse) with customizable color and stroke thickness
   2. Upload a background image
   3. Pan and zoom canvas
   4. Undo and redo
@@ -24,14 +24,25 @@ This application is based on the following technologies:
 This application has two versions, the SignalR [version](SignalR/) is built on top of ASP.NET Core SignalR and Azure SignalR Service. You can build and run it as a normal ASP.NET Core application:
 
 1. Create an Azure SignalR Service instance
-2. Get connection string
-3. Build and run the application locally
+2. Go to Access control (IAM) tab on portal, add "SignalR App Server" role to your own Azure account
+3. Set connection string
+   ```
+   set Azure__SignalR__ConnectionString=Endpoint=https://<resource_name>.service.signalr.net;Type=azure;
+   ```
+4. Make sure you log into Azure using Azure CLI
+5. Build and run the application locally
 
    ```
    dotnet build
-   dotnet user-secrets set Azure:SignalR:ConnectionString "<your connection string>"
    dotnet run
    ```
+
+> Alternatively you can also use access key based connection string to authenticate with Azure (which may be simpler but less secure than using Entra ID):
+> 1. Go to portal and copy connection string from Connection strings tab
+> 2. Save it to .NET secret store
+>    ```
+>    dotnet user-secrets set Azure:SignalR:ConnectionString "<your connection string>"
+>    ```
 
 Open multiple windows on http://localhost:5000/, when you paint in one window, others will see the update immediately.
 
@@ -77,29 +88,32 @@ Now your application will be available at: http://localhost:8080
 
 ## Deploy to Azure
 
-To deploy the application to Azure Web App, first package it into a zip file:
+1. To deploy the application to Azure Web App, first package it into a zip file:
 
-* For SignalR version:
-  ```
-  dotnet build
-  dotnet publish -c Release
-  ```
-  Then package all files under `bin/Release/net9.0/publish` to a zip file.
-* For WebSocket version, just run `npm install` and then package all files into a zip file.
+   * For SignalR version:
+     ```
+     dotnet build
+     dotnet publish -c Release
+     ```
+     Then package all files under `bin/Release/net9.0/publish` to a zip file.
+   * For WebSocket version, just run `npm install` and then package all files into a zip file.
 
-Then use the following command to deploy it to Azure Web App:
+2. Then use the following command to deploy it to Azure Web App:
 
-```
-az webapp deployment source config-zip --src <path_to_zip_file> -n <app_name> -g <resource_group_name>
-```
+   ```
+   az webapp deployment source config-zip --src <path_to_zip_file> -n <app_name> -g <resource_group_name>
+   ```
 
-Don't forget to set Azure SignalR Service connection string in the application settings. You can do it through portal or using Azure CLI:
-```
-az webapp config appsettings set --resource-group <resource_group_name> --name <app_name> \
-   --setting Azure__SignalR__ConnectionString="<connection_string>"
-```
+3. Set Azure SignalR Service connection string in the application settings. You can do it through portal or using Azure CLI:
+   ```
+   az webapp config appsettings set --resource-group <resource_group_name> --name <app_name> \
+      --setting Azure__SignalR__ConnectionString="Endpoint=https://<resource_name>.service.signalr.net;Type=azure;"
+   ```
+   And add "SignalR App Server" role to your web app instance
 
-Also update corresponding upstream urls if you're using WebSocket version.
+   > You can also use access key based connection string but it's highly unrecommended
+
+4. Also update corresponding upstream urls if you're using WebSocket version.
 
 Now your whiteboard is running in Azure at `https://<app_name>.azurewebsites.net`. Enjoy!
 

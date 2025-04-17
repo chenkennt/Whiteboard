@@ -11,16 +11,10 @@ using System.Threading.Tasks;
 namespace Microsoft.Azure.SignalR.Samples.Whiteboard;
 
 [Route("/background")]
-public class BackgroundController : Controller
+public class BackgroundController(IHubContext<DrawHub> context, Diagram diagram) : Controller
 {
-    private IHubContext<DrawHub> hubContext;
-    private Diagram diagram;
-
-    public BackgroundController(IHubContext<DrawHub> context, Diagram diagram)
-    {
-        hubContext = context;
-        this.diagram = diagram;
-    }
+    private readonly IHubContext<DrawHub> hubContext = context;
+    private readonly Diagram diagram = diagram;
 
     [HttpPost("upload")]
     public async Task<IActionResult> Upload(IFormFile file)

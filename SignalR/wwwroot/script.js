@@ -1,18 +1,14 @@
 function connect(url, connected, disconnected) {
-  let connectWithRetry = c => c.start().then(() => connected(c)).catch(error => {
+  let connectWithRetry = c => c.start().then(() => connected()).catch(error => {
     console.log('Failed to start SignalR connection: ' + error.message);
     setTimeout(() => connectWithRetry(c), 5000);
   });
 
   // create connection
-  let c = new signalR.HubConnectionBuilder().withUrl(url).build();
+  let c = new signalR.HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
 
-  // auto reconnect when connection is closed
-  c.onclose(() => {
-    disconnected(c);
-    console.log('Disconnected, try to reconnect.');
-    connectWithRetry(c);
-  });
+  c.onreconnecting(() => disconnected());
+  c.onreconnected(() => connected());
 
   connectWithRetry(c);
   return c;
@@ -423,6 +419,7 @@ let app = createApp({
 app.mount('#app');
 
 let inputNameElement = document.querySelector('#inputName');
+// disable keyboard events for username dialog
 let inputName = new bootstrap.Modal(inputNameElement, {
   backdrop: 'static',
   keyboard: false
@@ -503,7 +500,6 @@ let inputName = new bootstrap.Modal(inputNameElement, {
     e.preventDefault();
   });
 
-  // disable keyboard events for username dialog
   inputNameElement.addEventListener('shown.bs.modal', () => {
     document.querySelector('#username').focus();
   });
